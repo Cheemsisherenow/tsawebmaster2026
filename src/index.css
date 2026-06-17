@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Itim';
+  src: url('/fonts/Itim-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+html, body {
+  font-family: "Itim", cursive, sans-serif;
+  padding: 0 2vw;
+  margin: 0;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: #F7F8F3;
+}
+
+@layer component {
+  header {
+    @apply w-screen fixed top-0 left-0 z-50 bg-[#286A6C] px-[4vw] text-white;
+    button {
+      @apply cursor-pointer h-full py-[1vw] px-8 hover:-translate-y-0.5 hover:bg-[#1f5254] transition-all duration-300 ease-in-out ;
+    }
+    nav {
+      @apply flex flex-row justify-between items-baseline text-2xl;
+      ul {
+        @apply flex flex-row text-xl;
+      }
+    }
+  }
+  #landing {
+    @apply flex flex-row justify-between mt-[18vh] h-[82vh] w-full;
+    button {
+      @apply bg-[#286A6C] text-4xl text-white rounded-3xl py-4 px-8;
+    }
+    .text-body{
+      @apply flex flex-col;
+      .wrapper{
+        @apply flex flex-col gap-1;
+      }
+    }
+  }
+}
