@@ -9,6 +9,7 @@ const InteractivePieChart = () => {
 
   const [activeData, setActiveData] = useState(data[0]);
 
+
   const renderCustomSlice = (props) => {
     const { fill, innerRadius, outerRadius, isActive, ...rest } = props;
     
@@ -28,19 +29,19 @@ const InteractivePieChart = () => {
   };
 
   return (
-    <div>
-        <div className="inset-0 flex flex-col items-center pointer-events-none gap-0.5">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold transition-all duration-200">
+    <div className = "interactivePieChart">
+        <div className="volunteerGroup">
+          <span className="volunteer">
             {activeData.name}
           </span>
           <span 
-            className="text-3xl font-black transition-all duration-200"
+            className="percentage"
             style={{ color: activeData.color }}
           >
             {activeData.value}%
           </span>
         </div>
-      <div className="relative w-32 h-32">
+      <div className="chart">
         
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

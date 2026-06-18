@@ -49,24 +49,24 @@ const SimpleChart = () => {
   };
 
   return (
-    <div style={{ width: '100%', height: 230 }}>
+    <div className = "interactiveBarGraph">
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 35, right: 10, left: 0, bottom: 20 }}>
           <Tooltip cursor={false} content={({ active, payload }) => {
     if (!active || !payload?.length) return null;
     return (
-        <div className="bg-black/85 border border-[#63BDBF]/30 rounded-lg px-2 py-2 backdrop-blur-sm shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-        <p className="text-[#63BDBF] text-sm font-bold m-0">
+        <div className="custom-chart-tooltip">
+        <p className="date">
           {payload[0].payload.date}
         </p>
-        <p className="text-white text-sm font-semibold mt-0.5 mb-0">
+        <p className="value">
           ${payload[0].value} economic value
         </p>
       </div>
     );
   }}/>
           <YAxis domain={[30, 'dataMax + 2']} hide={true} />
-          <XAxis dataKey="date" interval={0} axisLine={false} tickLine={false} tick={{ dy: 15 }} />
+          <XAxis dataKey="date" interval={0}/>
           
           <Bar 
             dataKey="value" 

@@ -12,7 +12,6 @@ gsap.registerPlugin(ScrollTrigger);
 const Statistics = ({ sphereRef }) => {
     const containerRef   = useRef(null);
     const starFieldRef   = useRef(null);
-    const placeholderRef = useRef(null);
     const numStars = 300;
 
     useEffect(() => {
@@ -41,12 +40,14 @@ const Statistics = ({ sphereRef }) => {
             const rect      = el.getBoundingClientRect();
             const leftOffset = window.innerHeight * 0.04;
             const initialX  = rect.left - leftOffset;
+            const initialY = (window.innerHeight - rect.height) / 2;
 
+            console.log("start");
             gsap.set(el, {
                 position: 'fixed',
                 top: 0, left: 0,
                 x: initialX,
-                y: rect.top,
+                y: initialY,
                 width:  rect.width,
                 height: rect.height,
                 margin: 0,
@@ -64,6 +65,18 @@ const Statistics = ({ sphereRef }) => {
                     end:   'top top',
                     scrub: 1.2,
                     invalidateOnRefresh: true,
+                    onEnter: () => console.log("ENTER"),
+        onLeave: () => console.log("LEAVE"),
+        onEnterBack: () => console.log("ENTER BACK"),
+        onLeaveBack: () => console.log("LEAVE BACK"),
+
+        onRefresh: (self) => {
+            console.log("REFRESH", {
+                progress: self.progress,
+                start: self.start,
+                end: self.end
+            });
+        },
                 },
                 x: targetX,
                 y: targetY,
@@ -80,6 +93,7 @@ const Statistics = ({ sphereRef }) => {
     useGSAP(() => {
         const container = starFieldRef.current;
         if (!container) return;
+        
 
         const generatedStars = [];
 
@@ -118,6 +132,26 @@ const Statistics = ({ sphereRef }) => {
                 pinSpacing:    false,
                 anticipatePin: 1,
                 invalidateOnRefresh: true,
+                onLeave: () => {
+                    const el = sphereRef.current;
+                    if (!el) return;
+                    const scrollTrack = document.querySelector('.scroll-track');
+                    gsap.set(el, {
+                        position: 'absolute',
+                        zIndex: 5,
+                    });
+                    scrollTrack.appendChild(el);
+                },
+        
+                onEnterBack: () => {
+                    const el = sphereRef.current;
+                    if (!el) return;
+                    document.body.appendChild(el);
+                    gsap.set(el, {
+                        position: 'fixed',
+                        zIndex: 5,
+                    });
+                },
             },
         });
 
@@ -127,14 +161,14 @@ const Statistics = ({ sphereRef }) => {
             duration: 0.5,
         }, 0);
 
-        const cards = gsap.utils.toArray('.card', containerRef.current);
-        cards.forEach((card, index) => {
-            tl.fromTo(card,
+        const sections = gsap.utils.toArray('.wordSection', containerRef.current);
+        sections.forEach((section, index) => {
+            tl.fromTo(section,
                 { z: -3000, opacity: 0, rotateX: 35, rotateY: index % 2 === 0 ? -25 : 25 },
                 { z: 0, opacity: 1, rotateX: 0, rotateY: 0, ease: 'power2.out', duration: 1 },
                 index === 0 ? 0.1 : '+=0.2'
             )
-            .to(card, { z: 2000, opacity: 0, ease: 'power2.in', duration: 1 }, '+=0.5');
+            .to(section, { z: 2000, opacity: 0, ease: 'power2.in', duration: 1 }, '+=0.5');
         });
 
         const sequenceDuration = tl.duration();
@@ -145,6 +179,11 @@ const Statistics = ({ sphereRef }) => {
                 ease: 'none',
                 duration: sequenceDuration,
             }, 0);
+        });
+        tl.to(containerRef.current, {
+            backgroundColor: '#F7F8F3',
+            ease: 'power1.inOut',
+            duration: 0.5
         });
 
         return () => {
@@ -161,29 +200,28 @@ const Statistics = ({ sphereRef }) => {
                 >
                     <div ref={starFieldRef} className="starfield" style={{ transformStyle: 'preserve-3d' }} />
 
-                    <div
-                        ref={placeholderRef}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50 w-1/3 aspect-square"
-                        style={{ transformStyle: 'preserve-3d' }}
-                    />
-
+                    <div className="wordSection flex !flex-col !w-3/4 items-center justify-center absolute top-10 left-1/2 -translate-x-1/2">
+                        <p className="text-7xl">
+                            Explore endless opportunities
+                        </p>
+                        <p className="text-center">
+                            Our organization mitigates the engagement gap by serving as Gwinnett County's resource hub. We encourage community members to reverse Georgia's low volunteer rates by providing a centralized database of local organizations and to inspire individuals to see the value of their time in the community
+                        </p>
+                    </div>
                     {statistics.map((i) => (
                         <div
                             key={i.id}
-                            className={clsx('card flex flex-row absolute w-1/3 p-4 z-50', {
-                                '-translate-x-3/4 -translate-y-1/2': i.id % 2 !== 0,
-                                'translate-x-3/4 translate-y-1/2':  i.id % 2 === 0,
-                            })}
+                            className={clsx('wordSection', {'-translate-x-3/4 -translate-y-1/2': i.id % 2 !== 0, 'translate-x-3/4 translate-y-1/2':  i.id % 2 === 0,})}
                             style={{ transformStyle: 'preserve-3d', }}
                         >
                             {i.id == 1 && (<InteractivePieChart/>)  }
                             {i.id == 2 && (<SimpleChart/>)  }
                             <div>
                                 
-                                <div className="text-5xl font-black text-white">{i.top}</div>
-                                <div className="text-xl text-white/80 font-medium">{i.sub}</div>
+                                <div className="heading">{i.top}</div>
+                                <div className="subtitle">{i.sub}</div>
                                 <hr className="my-2" />
-                                <div className="text-xl text-white/80 font-medium">{i.description}</div>
+                                <div className="description">{i.description}</div>
                             </div>
                         </div>
                     ))}
