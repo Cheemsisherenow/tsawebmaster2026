@@ -14,7 +14,7 @@ function App() {
       case 'Home':
         return <Home />;
       case 'Resource Hub':
-        return <Resources />;
+        return <Resource_Hub />;
       case 'Match Me':
         return <Match_Me />;
       case 'Submit Resources':
