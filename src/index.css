@@ -30,7 +30,7 @@ html, body {
     }
   }
   #landing {
-    @apply relative flex flex-row justify-between mt-[18vh] h-[82vh] w-full mx-[4vw];
+    @apply relative flex flex-row justify-between mt-[18vh] min-h-[75vh] w-[92vw] mx-[4vw];
     button {
       @apply bg-[#286A6C] text-4xl text-white rounded-3xl py-4 px-8;
     }
