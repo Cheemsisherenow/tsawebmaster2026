@@ -2,6 +2,7 @@ import React from 'react'
 import Header from './components/Header'
 import { pageNavigation } from "./store"
 import Home from './components/Home';
+import Resource_Hub from './components/Resource_Hub';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
