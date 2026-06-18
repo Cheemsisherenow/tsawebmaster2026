@@ -11,23 +11,17 @@ const Sphere = ({ onHover }) => {
         const points = [];
         const rowCounts = [];
         
-        // Step 1: Calculate the radius and circumference of each horizontal row
         for (let r = 0; r < numRows; r++) {
-            // Normalized row position between -1 (top row) and 1 (bottom row)
             const normalizedRow = (r - (numRows - 1) / 2) / ((numRows - 1) / 2 || 1);
             
-            // Apply the vertical squeeze factor. Lower values squeeze rows tightly around the equator.
             const squeezedRow = normalizedRow * (verticalSqueeze);
             
-            // Map the squeezed layout safely into the sphere's vertical arc (phi)
-            // This centers your 5 rows around the equator (Math.PI / 2)
+          
             const phi = Math.acos(-squeezedRow);
             
-            // The actual radius of this specific horizontal slice of the sphere
             const rowRadius = radius * Math.sin(phi);
             const rowCircumference = 2 * Math.PI * rowRadius;
             
-            // Trick the math into allocating more space per card, resulting in fewer cards fitting per row
             const spaceNeededPerCard = (cardWidth + horizontalGap) * spacingFactor;
             const maxCardsInRow = Math.floor(rowCircumference / spaceNeededPerCard);
             
@@ -37,15 +31,13 @@ const Sphere = ({ onHover }) => {
             });
         }
     
-        // Step 2: Generate the exact 3D points based on the row-by-row capacities
         rowCounts.forEach(({ phi, count }) => {
             for (let i = 0; i < count; i++) {
-                // Because we divide the full 360 degrees (Math.PI * 2) by the exact card count,
-                // the gaps will automatically remain perfectly equal, just wider.
+                
                 const theta = (i / count) * (Math.PI * 2);
                 
                 const x = radius * Math.sin(phi) * Math.cos(theta);
-                const y = radius * Math.cos(phi); // Squeezing phi scales down this Y component!
+                const y = radius * Math.cos(phi); 
                 const z = radius * Math.sin(phi) * Math.sin(theta);
                 
                 points.push([x, y, z]);
@@ -55,17 +47,13 @@ const Sphere = ({ onHover }) => {
         return points;
     }
   
-    // --- Layout Constants ---
     const SPHERE_RADIUS = 5.5; 
     const CARD_WIDTH = 2.0;    
     const CARD_GAP = 0.15;     
     const NUM_ROWS = 5;
     const VERTICAL_SQUEEZE = 0.65; 
 
-    // CARD DENSITY CONTROL
-    // 1.0 = Packed tight (your original layout)
-    // 1.3 = Spaces them out, dropping a few cards per row and making the gaps larger but equal
-    // Increase this further to take even more cards out
+   
     const CARD_SPACING_FACTOR = 1.3; 
   
     const positions = useMemo(() => {
