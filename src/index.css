@@ -10,7 +10,6 @@
 
 html, body {
   font-family: "Itim", cursive, sans-serif;
-  padding: 0 2vw;
   margin: 0;
   width: 100%;
   overflow-x: hidden;
@@ -31,7 +30,7 @@ html, body {
     }
   }
   #landing {
-    @apply flex flex-row justify-between mt-[18vh] h-[82vh] w-full;
+    @apply relative flex flex-row justify-between mt-[18vh] h-[82vh] w-full mx-[4vw];
     button {
       @apply bg-[#286A6C] text-4xl text-white rounded-3xl py-4 px-8;
     }
@@ -39,6 +38,18 @@ html, body {
       @apply flex flex-col;
       .wrapper{
         @apply flex flex-col gap-1;
+      }
+    }
+  }
+  #statistics {
+    @apply bg-[#F7F8F3] text-white relative min-h-screen overflow-hidden;
+    .scroll-track {
+      @apply h-[600vh] relative bg-transparent z-10;
+      .threeD-screen {
+        @apply sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden;
+        .starfield {
+          @apply absolute inset-0 pointer-events-none;
+        }
       }
     }
   }

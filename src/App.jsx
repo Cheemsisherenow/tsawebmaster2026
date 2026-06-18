@@ -4,6 +4,10 @@ import { pageNavigation } from "./store"
 import Home from './components/Home';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
+  if (typeof window !== 'undefined') {
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+}
 
   const renderPage = () => {
     switch (currentPage) {
