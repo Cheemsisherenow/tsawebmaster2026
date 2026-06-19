@@ -3,6 +3,7 @@ import Header from './components/Header'
 import { pageNavigation } from "./store"
 import Home from './components/Home';
 import Resource_Hub from './components/Resource_Hub';
+import Discover from './components/Swiping';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
@@ -17,7 +18,7 @@ function App() {
       case 'Resource Hub':
         return <Resource_Hub />;
       case 'Match Me':
-        return <Match_Me />;
+        return <Discover />;
       case 'Submit Resources':
         return <Submit_Resources />;
       case 'Get Involved':

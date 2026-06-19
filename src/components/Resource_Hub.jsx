@@ -1,11 +1,275 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 
 const Resource_Hub = () => {
-  return (
-    <div>
-      
-    </div>
-  )
-}
+  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  
+  // Changed to 8 so it loads exactly 2 full rows on large screens
+  const [visibleCount, setVisibleCount] = useState(8);
+  
+  const gridRef = useRef(null);
+  const sentinelRef = useRef(null); 
 
-export default Resource_Hub
+  const API_URL = 'https://volunteer-api-x37c.onrender.com/api/opportunities';
+
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setEvents(data);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch opportunities:", err);
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+    fetchOpportunities();
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || visibleCount >= events.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prevCount) => prevCount + 8); // Load next 8
+        }
+      },
+      { rootMargin: '200px' } 
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      if (sentinelRef.current) observer.unobserve(sentinelRef.current);
+    };
+  }, [isLoading, events.length, visibleCount]);
+
+  useEffect(() => {
+    if (!isLoading && events.length > 0 && gridRef.current) {
+      const allCards = gridRef.current.querySelectorAll('.event-card');
+      
+      const startIndex = Math.max(0, visibleCount - 8); // Target last 8
+      const newCards = Array.from(allCards).slice(startIndex, visibleCount);
+
+      if (newCards.length > 0) {
+        gsap.fromTo(
+          newCards,
+          { opacity: 0, y: 30 },
+          { 
+            opacity: 1, 
+            y: 0, 
+            duration: 0.5, 
+            stagger: 0.08, 
+            ease: 'power2.out',
+            overwrite: 'auto' 
+          }
+        );
+      }
+    }
+  }, [isLoading, visibleCount, events]);
+
+  useEffect(() => {
+    document.body.style.overflow = selectedEvent ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedEvent]);
+
+  const formatDate = (dateString) => {
+    const dateObj = new Date(dateString);
+    dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
+    return dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  // Added h-[480px] to match the new taller cards
+  const SkeletonCard = () => (
+    <div className="h-[480px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col animate-pulse">
+      <div className="w-full h-48 bg-gray-200"></div>
+      <div className="p-5 flex flex-col flex-grow space-y-4">
+        <div className="flex justify-between items-start gap-4">
+          <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-6 bg-gray-200 rounded-full w-16 shrink-0"></div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        </div>
+        <div className="mt-auto pt-4 border-t border-gray-100 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 max-w-3xl">
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-6 text-center">
+          <h3 className="text-xl font-bold mb-2">Oops! We couldn't load the events.</h3>
+          <p className="text-red-600 mb-4">Make sure your backend API is running and the API_URL in the code is correct.</p>
+          <div className="bg-white/50 inline-block px-4 py-2 rounded-lg text-sm font-mono text-red-700">
+            Error details: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayedEvents = events.slice(0, visibleCount);
+
+  return (
+    <section className="mt-[18vh]">
+        <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Discover Resources in Gwinnett
+            </h1>
+            <p className="text-gray-600">
+                Search and filter 45+ verified community organizations, support services, and programs
+            </p>
+        </div>
+      <div className="container mx-[4vw] max-w-[92vw] mb-12">
+        <div 
+          ref={gridRef}
+          // Added xl:grid-cols-4 here
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+        >
+          {isLoading
+            ? Array(8).fill(0).map((_, index) => <SkeletonCard key={index} />)
+            : displayedEvents.map((event, index) => (
+                <div 
+                  // Added min-h-[480px] here to make the cards taller
+                  className={`event-card min-h-[480px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group cursor-pointer hover:-translate-y-1 ${
+                    index >= visibleCount - 8 ? 'opacity-0' : 'opacity-100'
+                  }`} 
+                  key={event.id}
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={event.img_url}
+                      alt={event.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) =>
+                        (e.target.src = 'https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found')
+                      }
+                    />
+                  </div>
+
+                  <div className="p-5 flex flex-col flex-grow">
+                    <div className="flex justify-between items-start gap-3 mb-3">
+                      <h2 className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
+                        {event.title}
+                      </h2>
+                      <span className="shrink-0 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-100 uppercase tracking-wide">
+                        {event.tag}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-1 mb-4">
+                      <div className="text-sm font-medium text-gray-800">
+                        {event.org}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center justify-between">
+                        <span>{event.location}</span>
+                        <span className="font-medium text-indigo-600">{formatDate(event.event_date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                        {event.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+        </div>
+
+        <div ref={sentinelRef} className="h-10 w-full mt-8 flex items-center justify-center">
+          {!isLoading && visibleCount < events.length && (
+            <div className="text-sm text-gray-400 animate-pulse">Loading more matching opportunities...</div>
+          )}
+        </div>
+      </div>
+
+      {selectedEvent && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm transition-opacity"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedEvent(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <img
+              src={selectedEvent.img_url}
+              alt={selectedEvent.title}
+              className="w-full h-64 sm:h-80 object-cover"
+              onError={(e) =>
+                (e.target.src = 'https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found')
+              }
+            />
+
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight flex-1">
+                  {selectedEvent.title}
+                </h2>
+                <span className="px-4 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-full border border-blue-100 uppercase tracking-wide">
+                  {selectedEvent.tag}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-4 border-y border-gray-100 mb-6 bg-gray-50/50 rounded-lg px-4">
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Organization</div>
+                  <div className="font-semibold text-gray-900">{selectedEvent.org}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Date</div>
+                  <div className="font-semibold text-indigo-600">{formatDate(selectedEvent.event_date)}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Location</div>
+                  <div className="font-semibold text-gray-900">{selectedEvent.location}</div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">About this opportunity</h3>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {selectedEvent.description}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default Resource_Hub;

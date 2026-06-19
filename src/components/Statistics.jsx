@@ -156,9 +156,9 @@ const Statistics = ({ sphereRef }) => {
         });
 
         tl.to(containerRef.current, {
-            backgroundColor: '#020204',
+            backgroundColor: '#17252B',
             ease: 'power1.out',
-            duration: 0.5,
+            duration: 1,
         }, 0);
 
         const sections = gsap.utils.toArray('.wordSection', containerRef.current);
@@ -183,7 +183,7 @@ const Statistics = ({ sphereRef }) => {
         tl.to(containerRef.current, {
             backgroundColor: '#F7F8F3',
             ease: 'power1.inOut',
-            duration: 0.5
+            duration: 1
         });
 
         return () => {

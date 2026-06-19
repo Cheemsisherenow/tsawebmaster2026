@@ -1,54 +1,39 @@
 import {React, useState, useRef} from 'react'
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { pageNavigation } from '../store'
 
 const Highlight = () => {
-    const [active, setActive] = useState(null);
     const componentRef = useRef(null);
+    const changeCurrentPage = pageNavigation((state) => state.changeCurrentPage)
+    
     useGSAP(() => {
-        
         const blocks = gsap.utils.toArray('.block', componentRef.current);
-
-        blocks.forEach((block) => {
-            const outer_view = block.querySelector('.outer_view');
-            const inner_view = block.querySelector('.inner_view');
-
-            const tl = gsap.timeline({ 
-                paused: true,
-                overwrite: 'auto'
+        let currentActiveBlock = blocks[0];
+        // initial state
+        blocks.forEach((b) => {
+            gsap.set(b, { flexGrow: .8 });
+            gsap.set(b.querySelector('.inner_view'), { opacity: 0 });
+            gsap.set(b.querySelector('.outer_view'), { opacity: 1 });
+        });
+    
+        const apply = (active) => {
+            blocks.forEach((b) => {
+                const on = b === active;
+                // width: all blocks animate together, same duration + ease
+                gsap.to(b, { flexGrow: on ? 3 : .8, duration: 1, ease: 'power3.out', overwrite: 'auto' });
+                // crossfade, independent of the width tween
+                gsap.to(b.querySelector('.outer_view'), { opacity: on ? 0 : 1, duration: 0.5, overwrite: 'auto' });
+                gsap.to(b.querySelector('.inner_view'), { opacity: on ? 1 : 0, duration: on ? 0.6 : 0.3, overwrite: 'auto' });
             });
-
-            tl.to(block, {
-                width: '50vw',
-              duration: 0.3,
-              overwrite: 'auto' 
-            }, "<");
-
-            tl.to(outer_view, {
-                opacity: 0,
-                duration: 0.2,
-                
-            })
-
-            tl.to(inner_view, {
-                opacity: 1,
-                duration: 0.2,
-                
-            })
-          
-            block._hoverAnim = tl;
-          
-            block.addEventListener('mouseenter', () => {
-              blocks.forEach((b) => {
-                if (b === block) {
-                  b._hoverAnim.play(); 
-                } else {
-                  b._hoverAnim.reverse(); 
-                }
-              });
-            });
-          });
-    },[])
+        };
+        if (currentActiveBlock) {
+            apply(currentActiveBlock);
+        }
+    
+        blocks.forEach((b) => b.addEventListener('mouseenter', () => apply(b)));
+         // reset when leaving the row
+    }, []);
   return (
     <section id="highlights" ref={componentRef}>
         <div className="flex flex-col items-center">
@@ -59,7 +44,7 @@ const Highlight = () => {
                 The ones making the biggest differences in Gwinnett
             </p>
         </div>
-        <div className="container">
+        <div className="block_container">
             <div className="block">
                 <div className="outer_view">
                     <div className="upper_line"/>
@@ -144,6 +129,11 @@ const Highlight = () => {
                     </button>
                 </div>
             </div>
+        </div>
+        <div className="w-full">
+            <button onClick = {() => changeCurrentPage("Resource Hub")}>
+                Start Discovering
+            </button>
         </div>
     </section>
   )
