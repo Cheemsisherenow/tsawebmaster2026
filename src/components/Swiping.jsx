@@ -1,19 +1,16 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useLayoutEffect } from "react";
+import { gsap } from "gsap";
+import { Draggable } from "gsap/Draggable";
+
+gsap.registerPlugin(Draggable);
 
 /**
  * Discover — volunteer opportunity swiper.
  *
- * Same behavior as the original Discover tab (drag/swipe right to save,
- * left to skip, undo, reset, match counter, end screen) but re-skinned with
- * a warm "community postcards" identity instead of the indigo Tinder look.
- *
- * Palette
- *   forest   #1F3D2B  ink / anchor
- *   moss     #2F6B4F  primary actions
- *   clay     #C2603A  accent / "skip"
- *   coral    #E08A5B  "save" warmth
- *   cream    #F7F1E3  page
- *   sand     #EADFC6  card edges
+ * Drag/swipe right to keep, left to pass; undo, reset, match counter,
+ * end screen. Swipe mechanics run on GSAP Draggable. Cards use the teal
+ * Resource_Hub design. All styling is Tailwind utilities (no inline CSS,
+ * no px-based arbitrary values).
  */
 
 const SEED = [
@@ -78,29 +75,22 @@ const SWIPE_THRESHOLD = 100;
 const TINT_THRESHOLD = 60;
 
 export default function Discover() {
-  // deck is rendered bottom-up: last item in the array is the top card.
+  // Deck renders bottom-up: last item in the array is the top card.
   const [deck, setDeck] = useState(SEED);
   const [matched, setMatched] = useState([]);
   const [lastSwiped, setLastSwiped] = useState(null);
-  const [leaving, setLeaving] = useState(null); // { id, dir }
+
+  const topRef = useRef(null);   // the current top <article>
+  const flingRef = useRef(null); // lets the buttons trigger the same swipe
 
   const topCard = deck[deck.length - 1];
   const isDone = deck.length === 0;
 
-  const commitSwipe = useCallback(
-    (dir) => {
-      const item = deck[deck.length - 1];
-      if (!item) return;
-      setLastSwiped(item);
-      if (dir === "right") setMatched((m) => [...m, item]);
-      setLeaving({ id: item.id, dir });
-      window.setTimeout(() => {
-        setDeck((d) => d.slice(0, -1));
-        setLeaving(null);
-      }, 300);
-    },
-    [deck]
-  );
+  const commitSwipe = useCallback((dir, item) => {
+    setLastSwiped(item);
+    if (dir === "right") setMatched((m) => [...m, item]);
+    setDeck((d) => d.filter((x) => x.id !== item.id));
+  }, []);
 
   const undo = useCallback(() => {
     if (!lastSwiped) return;
@@ -113,46 +103,80 @@ export default function Discover() {
     setDeck(SEED);
     setMatched([]);
     setLastSwiped(null);
-    setLeaving(null);
   }, []);
 
-  return (
-    <section className="min-h-screen bg-[#F7F1E3] text-[#1F3D2B] antialiased">
-      {/* page heading */}
-      <header className="mx-auto max-w-2xl px-7 pt-20 pb-8 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#1F3D2B]/15 bg-[#EADFC6] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#2F6B4F]">
-          Pick your pace
-        </span>
-        <h1 className="mt-5 font-serif text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
-          Discover ways to
-          <span className="block text-[#C2603A]">show up nearby</span>
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[17px] leading-relaxed text-[#1F3D2B]/70">
-          Keep the ones that fit your week, pass on the ones that don&apos;t.
-          Everything you keep gets saved to your list.
-        </p>
-      </header>
+  // Wire up Draggable on whichever card is currently on top.
+  useLayoutEffect(() => {
+    const el = topRef.current;
+    if (!el || !topCard) return;
 
-      <div className="mx-auto max-w-[460px] px-7 pb-24">
+    const keepEl = el.querySelector('[data-stamp="keep"]');
+    const passEl = el.querySelector('[data-stamp="pass"]');
+
+    // Reset the new top card to a clean resting pose.
+    gsap.set(el, { x: 0, y: 0, rotation: 0, opacity: 1, borderColor: "#286A6C" });
+    gsap.set([keepEl, passEl], { opacity: 0 });
+
+    const drag = Draggable.create(el, {
+      type: "x,y",
+      onDrag() {
+        gsap.set(el, {
+          rotation: this.x / 14,
+          borderColor:
+            this.x > TINT_THRESHOLD ? "#2F6B4F"
+            : this.x < -TINT_THRESHOLD ? "#C2603A"
+            : "#286A6C",
+        });
+        gsap.set(keepEl, { opacity: this.x > TINT_THRESHOLD ? 1 : 0 });
+        gsap.set(passEl, { opacity: this.x < -TINT_THRESHOLD ? 1 : 0 });
+      },
+      onDragEnd() {
+        if (this.x > SWIPE_THRESHOLD) fling("right");
+        else if (this.x < -SWIPE_THRESHOLD) fling("left");
+        else snapBack();
+      },
+    })[0];
+
+    const fling = (dir) => {
+      drag.disable();
+      gsap.to(el, {
+        x: dir === "right" ? 600 : -600,
+        rotation: dir === "right" ? 30 : -30,
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.in",
+        onComplete: () => commitSwipe(dir, topCard),
+      });
+    };
+
+    const snapBack = () => {
+      gsap.to(el, { x: 0, y: 0, rotation: 0, duration: 0.4, ease: "power3.out" });
+      gsap.to([keepEl, passEl], { opacity: 0, duration: 0.2 });
+      gsap.set(el, { borderColor: "#286A6C" });
+    };
+
+    flingRef.current = fling;
+    return () => drag.kill();
+  }, [topCard?.id, commitSwipe]);
+
+  return (
+    <section className="min-h-screen bg-[#F7F8F3] pt-[18vh] text-[#1F3D2B]">
+      <div className="mx-auto max-w-sm px-7 pb-24">
         {isDone ? (
           <EndScreen count={matched.length} onReset={reset} />
         ) : (
           <>
-            <CardStack
-              deck={deck}
-              leaving={leaving}
-              onSwipe={commitSwipe}
-            />
+            <CardStack deck={deck} topRef={topRef} />
 
             <Controls
-              onSkip={() => commitSwipe("left")}
-              onSave={() => commitSwipe("right")}
+              onSkip={() => flingRef.current?.("left")}
+              onSave={() => flingRef.current?.("right")}
               onUndo={undo}
               canUndo={!!lastSwiped}
             />
 
             {matched.length > 0 && (
-              <p className="mt-6 text-center text-[17px] font-bold text-[#2F6B4F]">
+              <p className="mt-6 text-center text-base font-bold text-[#2F6B4F]">
                 <span aria-hidden>🌱</span> {matched.length} kept so far
               </p>
             )}
@@ -165,160 +189,88 @@ export default function Discover() {
 
 /* ------------------------------------------------------------------ */
 
-function CardStack({ deck, leaving, onSwipe }) {
+function CardStack({ deck, topRef }) {
   return (
-    <div className="relative mb-8 h-[560px]">
+    <div className="relative mb-8 h-[32rem]">
       {deck.map((o, i) => {
-        const isTop = i === deck.length - 1;
         const depth = deck.length - 1 - i; // 0 = top
+        const isTop = depth === 0;
+        const lift = Math.min(depth, 2);
+
+        const z = depth === 0 ? "z-30" : depth === 1 ? "z-20" : "z-10";
+        const pose =
+          depth === 0 ? "" : lift === 1 ? "scale-[0.965] translate-y-3" : "scale-[0.93] translate-y-6";
+
         return (
-          <Card
+          <article
             key={o.id}
-            data={o}
-            isTop={isTop}
-            depth={depth}
-            leaving={leaving && leaving.id === o.id ? leaving.dir : null}
-            onSwipe={onSwipe}
-          />
+            ref={isTop ? topRef : null}
+            className={`group absolute inset-x-0 top-0 h-[30rem] select-none overflow-hidden rounded-3xl border border-[#286A6C] bg-[#F7F8F3] shadow-md ${z} ${pose} ${
+              isTop
+                ? "cursor-grab touch-none transition-shadow duration-300 hover:ring-4 hover:ring-[#286A6C]/40 active:cursor-grabbing"
+                : "pointer-events-none transition-transform duration-300"
+            }`}
+          >
+            {/* image strip */}
+            <img
+              src={o.img}
+              alt={o.title}
+              className="h-2/5 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => (e.target.src = "https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found")}
+            />
+
+            {/* floating content card */}
+            <div className="absolute inset-0 flex flex-col justify-end px-5 pb-5">
+              <div className="flex h-3/4 flex-col rounded-lg bg-[#F7F8F3] p-5 shadow-lg">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <h2 className="text-lg font-bold leading-tight text-gray-900 line-clamp-2">{o.title}</h2>
+                  {o.tag && (
+                    <span className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                      {o.tag}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mb-4 flex flex-col gap-1">
+                  <div className="text-sm font-medium text-gray-800">{o.org}</div>
+
+                  <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#1F3D2B]/65">
+                    <Meta icon="📅">{o.date}</Meta>
+                    <Meta icon="⏰">{o.duration}</Meta>
+                    <Meta icon="📍">{o.loc}</Meta>
+                  </dl>
+
+                  <div className="flex flex-col items-start gap-4 pt-4">
+                    <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">{o.desc}</p>
+                    <hr className="w-full" />
+                  </div>
+                </div>
+
+                <div className="mt-auto flex w-full justify-start">
+                  <button className="rounded-md border border-[#286A6C] bg-transparent px-3 py-1.5 text-[#286A6C] shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#286A6C] hover:text-white hover:shadow-lg">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* drag verdict stamps — opacity driven by GSAP */}
+            <span
+              data-stamp="keep"
+              className="absolute left-5 top-6 z-20 -rotate-12 rounded-lg border-2 border-[#2F6B4F] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#2F6B4F] opacity-0"
+            >
+              Keep
+            </span>
+            <span
+              data-stamp="pass"
+              className="absolute right-5 top-6 z-20 rotate-12 rounded-lg border-2 border-[#C2603A] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#C2603A] opacity-0"
+            >
+              Pass
+            </span>
+          </article>
         );
       })}
     </div>
-  );
-}
-
-function Card({ data, isTop, depth, leaving, onSwipe }) {
-  const ref = useRef(null);
-  const drag = useRef({ active: false, startX: 0, dx: 0 });
-  const [dx, setDx] = useState(0);
-  const [dragging, setDragging] = useState(false);
-
-  // Pointer handlers only matter for the top card.
-  const onPointerDown = (e) => {
-    if (!isTop || leaving) return;
-    drag.current = {
-      active: true,
-      startX: e.clientX,
-      dx: 0,
-    };
-    setDragging(true);
-    ref.current?.setPointerCapture?.(e.pointerId);
-  };
-
-  const onPointerMove = (e) => {
-    if (!drag.current.active) return;
-    const d = e.clientX - drag.current.startX;
-    drag.current.dx = d;
-    setDx(d);
-  };
-
-  const onPointerUp = () => {
-    if (!drag.current.active) return;
-    const d = drag.current.dx;
-    drag.current.active = false;
-    setDragging(false);
-    if (d > SWIPE_THRESHOLD) onSwipe("right");
-    else if (d < -SWIPE_THRESHOLD) onSwipe("left");
-    else setDx(0);
-  };
-
-  // Resolve transform: leaving animation > active drag > resting stack pose.
-  let transform;
-  let transition;
-  if (leaving) {
-    const x = leaving === "right" ? 600 : -600;
-    const rot = leaving === "right" ? 30 : -30;
-    transform = `translateX(${x}px) rotate(${rot}deg)`;
-    transition = "transform .3s ease, opacity .3s ease";
-  } else if (isTop) {
-    transform = `translateX(${dx}px) rotate(${dx / 14}deg)`;
-    transition = dragging ? "none" : "transform .3s ease, border-color .2s";
-  } else {
-    // Cards below peek out, gently stacked.
-    const lift = Math.min(depth, 2);
-    transform = `scale(${1 - lift * 0.035}) translateY(${lift * 12}px)`;
-    transition = "transform .3s ease";
-  }
-
-  const tintColor =
-    isTop && !leaving
-      ? dx > TINT_THRESHOLD
-        ? "#E08A5B"
-        : dx < -TINT_THRESHOLD
-        ? "#C2603A"
-        : "#EADFC6"
-      : "#EADFC6";
-
-  const showLike = isTop && dx > TINT_THRESHOLD;
-  const showNope = isTop && dx < -TINT_THRESHOLD;
-
-  return (
-    <article
-      ref={ref}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      style={{
-        transform,
-        transition,
-        opacity: leaving ? 0 : 1,
-        zIndex: depth === 0 ? 30 : 30 - depth,
-        borderColor: tintColor,
-        touchAction: "none",
-      }}
-      className={`absolute inset-x-0 top-0 select-none overflow-hidden rounded-[26px] border-[3px] bg-[#FFFDF6] shadow-[0_18px_40px_-12px_rgba(31,61,43,0.35)] ${
-        isTop ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"
-      }`}
-    >
-      {/* photo + stamp */}
-      <div className="relative h-[270px]">
-        <div
-          className="h-full w-full bg-cover bg-center"
-          style={{ backgroundImage: `url('${data.img}')` }}
-        />
-        <span className="absolute left-4 top-4 rounded-md border border-white/60 bg-[#1F3D2B]/85 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F7F1E3] backdrop-blur">
-          {data.tag}
-        </span>
-
-        {/* drag verdict stamps */}
-        <Verdict show={showLike} label="Keep" tone="#2F6B4F" side="left" />
-        <Verdict show={showNope} label="Pass" tone="#C2603A" side="right" />
-      </div>
-
-      {/* body */}
-      <div className="p-6">
-        <h3 className="font-serif text-[23px] font-black leading-tight">
-          {data.title}
-        </h3>
-        <p className="mt-1 text-sm font-semibold text-[#2F6B4F]">{data.org}</p>
-        <p className="mt-3 text-[14px] leading-relaxed text-[#1F3D2B]/70">
-          {data.desc}
-        </p>
-        <dl className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[13px] text-[#1F3D2B]/65">
-          <Meta icon="📅">{data.date}</Meta>
-          <Meta icon="⏰">{data.duration}</Meta>
-          <Meta icon="📍">{data.loc}</Meta>
-        </dl>
-      </div>
-    </article>
-  );
-}
-
-function Verdict({ show, label, tone, side }) {
-  return (
-    <span
-      style={{
-        color: tone,
-        borderColor: tone,
-        opacity: show ? 1 : 0,
-        transform: `rotate(${side === "left" ? -12 : 12}deg)`,
-      }}
-      className={`absolute top-6 ${
-        side === "left" ? "left-5" : "right-5"
-      } rounded-lg border-[3px] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider transition-opacity`}
-    >
-      {label}
-    </span>
   );
 }
 
@@ -334,41 +286,56 @@ function Meta({ icon, children }) {
 /* ------------------------------------------------------------------ */
 
 function Controls({ onSkip, onSave, onUndo, canUndo }) {
-  return (
-    <div className="flex items-center justify-center gap-5">
-      <RoundBtn
-        onClick={onSkip}
-        label="Pass"
-        className="h-[66px] w-[66px] bg-[#F3E2D6] text-[#C2603A] hover:bg-[#ECD3C2]"
-      >
-        ✕
-      </RoundBtn>
-
-      <RoundBtn
-        onClick={onUndo}
-        label="Undo last"
-        disabled={!canUndo}
-        className="h-[52px] w-[52px] bg-[#EADFC6] text-[#1F3D2B]/70 hover:bg-[#E0D3B5] disabled:opacity-0"
-      >
-        ↻
-      </RoundBtn>
-
-      <RoundBtn
-        onClick={onSave}
-        label="Keep"
-        className="h-[66px] w-[66px] bg-[#2F6B4F] text-[#F7F1E3] hover:bg-[#255840]"
-      >
-        ♥
-      </RoundBtn>
-    </div>
-  );
-}
+    return (
+      <div className="flex items-end justify-center gap-6">
+        <div className="flex flex-col items-center gap-2">
+          <RoundBtn
+            onClick={onSkip}
+            label="Pass"
+            className="h-16 w-16 bg-[#F3E2D6] text-[#C2603A] hover:bg-[#ECD3C2]"
+          >
+            ✕
+          </RoundBtn>
+          <span className="text-xs font-semibold uppercase tracking-wide text-[#C2603A]">Pass</span>
+        </div>
+  
+        <div className="flex flex-col items-center gap-2">
+          <RoundBtn
+            onClick={onUndo}
+            label="Undo last"
+            disabled={!canUndo}
+            className="h-12 w-12 bg-[#EADFC6] text-[#1F3D2B]/70 hover:bg-[#E0D3B5] disabled:opacity-40"
+          >
+            ↻
+          </RoundBtn>
+          <span
+            className={`text-xs font-semibold uppercase tracking-wide transition-opacity ${
+              canUndo ? "text-[#1F3D2B]/70" : "text-[#1F3D2B]/30"
+            }`}
+          >
+            Undo
+          </span>
+        </div>
+  
+        <div className="flex flex-col items-center gap-2">
+          <RoundBtn
+            onClick={onSave}
+            label="Keep"
+            className="h-16 w-16 bg-[#286A6C] text-[#F7F8F3] hover:bg-[#1F5557]"
+          >
+            ♥
+          </RoundBtn>
+          <span className="text-xs font-semibold uppercase tracking-wide text-[#286A6C]">Keep</span>
+        </div>
+      </div>
+    );
+  }
 
 function RoundBtn({ children, label, className = "", ...props }) {
   return (
     <button
       aria-label={label}
-      className={`flex items-center justify-center rounded-full text-[26px] leading-none shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F3D2B] enabled:hover:scale-110 disabled:cursor-not-allowed ${className}`}
+      className={`flex items-center justify-center rounded-full text-2xl leading-none shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#286A6C] enabled:hover:scale-110 disabled:cursor-not-allowed ${className}`}
       {...props}
     >
       {children}
@@ -380,19 +347,16 @@ function RoundBtn({ children, label, className = "", ...props }) {
 
 function EndScreen({ count, onReset }) {
   return (
-    <div className="rounded-[26px] border-[3px] border-[#EADFC6] bg-[#FFFDF6] px-8 py-16 text-center shadow-[0_18px_40px_-12px_rgba(31,61,43,0.35)]">
+    <div className="rounded-3xl border-2 border-[#286A6C] bg-[#F7F8F3] px-8 py-16 text-center shadow-xl">
       <div className="text-6xl">🌻</div>
-      <h3 className="mt-4 font-serif text-3xl font-black">
-        That&apos;s the whole stack
-      </h3>
-      <p className="mt-3 text-[17px] text-[#1F3D2B]/70">
-        You kept{" "}
-        <span className="font-bold text-[#2F6B4F]">{count}</span>{" "}
+      <h3 className="mt-4 text-3xl font-black text-gray-900">That&apos;s the whole stack</h3>
+      <p className="mt-3 text-base text-[#1F3D2B]/70">
+        You kept <span className="font-bold text-[#286A6C]">{count}</span>{" "}
         {count === 1 ? "opportunity" : "opportunities"}.
       </p>
       <button
         onClick={onReset}
-        className="mt-8 rounded-xl bg-[#2F6B4F] px-7 py-3 text-sm font-bold text-[#F7F1E3] transition hover:bg-[#255840] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F3D2B]"
+        className="mt-8 rounded-xl bg-[#286A6C] px-7 py-3 text-sm font-bold text-[#F7F8F3] transition hover:bg-[#1F5557] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#286A6C]"
       >
         Browse again
       </button>

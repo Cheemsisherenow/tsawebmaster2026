@@ -4,7 +4,6 @@ import FinalSphere from './Globe/FinalSphere'
 import Statistics from './Statistics'
 import Highlight from './Highlight'
 import Location from './Location'
-import Footer from './Footer'
 
 const Home = () => {
     const changeCurrentPage = pageNavigation((state) => state.changeCurrentPage)
@@ -40,7 +39,7 @@ const Home = () => {
             <Statistics sphereRef={sphereRef} />
             <Highlight />
             <Location/>
-            <Footer/>
+            
         </div>
     )
 }

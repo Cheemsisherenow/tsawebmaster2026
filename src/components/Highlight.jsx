@@ -23,7 +23,7 @@ const Highlight = () => {
                 // width: all blocks animate together, same duration + ease
                 gsap.to(b, { flexGrow: on ? 3 : .8, duration: 1, ease: 'power3.out', overwrite: 'auto' });
                 // crossfade, independent of the width tween
-                gsap.to(b.querySelector('.outer_view'), { opacity: on ? 0 : 1, duration: 0.5, overwrite: 'auto' });
+                gsap.to(b.querySelector('.outer_view'), { opacity: on ? 0 : 1, duration: 0, overwrite: 'auto' });
                 gsap.to(b.querySelector('.inner_view'), { opacity: on ? 1 : 0, duration: on ? 0.6 : 0.3, overwrite: 'auto' });
             });
         };

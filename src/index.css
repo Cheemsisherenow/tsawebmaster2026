@@ -171,7 +171,7 @@ html, body {
     .map_container {
       @apply flex flex-row w-full h-[90vh] gap-4;
       .gwinnett_map {
-        @apply bg-[url('/tsawebmaster2026/gwinnett.png')] relative w-full max-w-[60%] h-full bg-cover bg-center border border-[#333333]/20 bg-no-repeat bg-[#D8EAE8] rounded-3xl p-4 shadow-md;
+        @apply bg-[url('/tsawebmaster2026/gwinnett.png')] relative w-full max-w-[60%] h-full bg-cover bg-center border border-[#D4D3D3]/20 bg-no-repeat bg-[#D8EAE8] rounded-3xl p-4 shadow-md;
         .coordinate_map {
           @apply absolute top-[10%] left-[15%] w-[70%] h-[80%];
         }
@@ -193,4 +193,5 @@ html, body {
       }
     }
   }
+  
 }

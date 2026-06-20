@@ -1,6 +1,9 @@
 import React from 'react'
+import { pageNavigation } from '../store'
+import { headerLinks } from '../constants'
 
 const Footer = () => {
+    const changeCurrentPage = pageNavigation((state) => state.changeCurrentPage)
   return (
     <footer className="bg-[#286A6C] text-white px-[4vw] pb-[4vh]">
         <div className="flex flex-row justify-between py-[8vh]">
@@ -21,23 +24,15 @@ const Footer = () => {
                 <p className="text-2xl">
                     Navigation
                 </p>
-                <div className="flex flex-col items-start gap-2">
-                    <button>
-                        Home
-                    </button>
-                    <button>
-                        Resource Hub
-                    </button>
-                    <button>
-                        Match Me
-                    </button>
-                    <button>
-                        Submit Resources
-                    </button>
-                    <button>
-                        Get Involved
-                    </button>
-                </div>
+                <ul className="flex flex-col items-start gap-2">
+                    {headerLinks.map((link) => (
+                        <li key = {link.label}>
+                            <button onClick = {() => changeCurrentPage(link.label) }>
+                                    {link.label}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
                 
             </div>
         </div>
