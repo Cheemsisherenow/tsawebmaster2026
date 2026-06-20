@@ -199,7 +199,7 @@ const Resource_Hub = () => {
   }
 
   return (
-    <section className="mt-[18vh]" ref={topRef}>
+    <section className="mt-[18vh] h-fit" ref={topRef}>
       <div className="text-center mb-10">
         <h1 className="text-7xl font-bold text-gray-900 mb-4">Discover Resources in Gwinnett</h1>
         <p className="text-gray-600 text-2xl">
@@ -209,7 +209,7 @@ const Resource_Hub = () => {
 
       <div className="container mx-[4vw] max-w-[92vw] mb-12">
         {!isLoading && (
-          <div className="bg-white border h-[20vh] border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 mb-8">
+            <div className=" border border-gray-100 rounded-xl shadow-sm p-4 sm:p-5 mb-8 h-fit self-start">
             {/* Filter fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* City — dropdown */}
@@ -254,7 +254,7 @@ const Resource_Hub = () => {
               <div>
                 <label htmlFor="location" className={fieldLabel}>Location</label>
                 <input
-                  id="location"
+                  id="ab"
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
