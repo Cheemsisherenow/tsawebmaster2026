@@ -4,6 +4,7 @@ import { pageNavigation } from "./store"
 import Home from './components/Home';
 import Resource_Hub from './components/Resource_Hub';
 import Discover from './components/Swiping';
+import Submit_Resources from './components/SubmitResources';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
