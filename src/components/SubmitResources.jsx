@@ -1,21 +1,6 @@
 import { useState } from "react";
 import emailjs from "@emailjs/browser";
 const API_URL = 'https://volunteer-api-x37c.onrender.com/api/opportunities';
-/**
- * SubmitResource — "Know a Resource We're Missing?" form.
- *
- * Self-contained: all styling via inline styles + one injected <style> block,
- * so it renders identically with or without Tailwind. No external CSS/config.
- *
- * Same behavior/fields as the original Submit a Resource page: org name +
- * category required, website/phone optional, address + description required,
- * optional submitter name/email, client-side required validation, and a
- * success panel with "Submit Another".
- *
- * Palette (matches Discover)
- *   forest #1F3D2B · moss #2F6B4F · clay #C2603A · cream #F7F1E3
- *   sand #EADFC6 · paper #FFFDF6
- */
 
 const C = {
   forest: "#1F3D2B",
@@ -38,6 +23,12 @@ const CATEGORIES = [
   "Other",
 ];
 
+const TYPE_OPTIONS = [
+  "Nonprofit/Volunteer",
+  "Community/Support Service",
+  "Community Event",
+];
+
 const EMPTY = {
   org: "",
   category: "",
@@ -47,8 +38,9 @@ const EMPTY = {
   description: "",
   name: "",
   email: "",
-  title: "",        // added field
-  imageUrl: "",     // added field
+  title: "",
+  imageUrl: "",
+  type: "",     // added field
 };
 
 const STYLE_ID = "submit-resource-styles";
@@ -156,39 +148,41 @@ export default function Submit_Resources({ onSubmit }) {
   const handleSubmit = async () => {
   if (!validate()) return;
     const API_BASE = 'https://volunteer-api-x37c.onrender.com';
-
-// Map form fields -> DB columns, then URL-encode each
-const params = new URLSearchParams({
-    title:       form.title,
-    org:         form.org,
-    description: form.description,
-    img_url:     form.imageUrl,
-
-    location:    form.address,
-    tag:         form.category,
-});
-
-const approveLink = `${API_BASE}/api/add?${params.toString()}`;
-console.log("approveLink:", approveLink);
-  try {
-    await emailjs.send(
-    "service_1d0iguh",
-    "template_43ja1d8",
-    {
-        org: form.org,
-        category: form.category,
-        website: form.website,
-        phone: form.phone,
-        address: form.address,
+    // Map form fields -> DB columns, then URL-encode each
+    const params = new URLSearchParams({
+        title:       form.title,
+        org:         form.org,
         description: form.description,
-        name: form.name,
-        email: form.email,
-        title: form.title,
-        imageUrl: form.imageUrl,
-        approveLink,          // <-- new
-    },
-    "ZjMpFzBaeqBM-ZXP0"
-);
+        img_url:     form.imageUrl,
+
+        location:    form.address,
+        tag:         form.category,
+        link:       form.website,
+        type:       form.type
+    });
+    const approveLink = `${API_BASE}/api/add?${params.toString()}`;
+    console.log("approveLink:", approveLink);
+
+    try {
+      await emailjs.send(
+        "service_1d0iguh",
+        "template_43ja1d8",
+        {
+            org: form.org,
+            category: form.category,
+            website: form.website,
+            phone: form.phone,
+            address: form.address,
+            description: form.description,
+            name: form.name,
+            email: form.email,
+            title: form.title,
+            imageUrl: form.imageUrl,
+            type: form.type,
+            approveLink,          // <-- new
+        },
+        "ZjMpFzBaeqBM-ZXP0"
+      );
 
     setSubmitted(true);
   } catch (error) {
@@ -285,6 +279,21 @@ console.log("approveLink:", approveLink);
           </div>
 
           <div className="sbr-row">
+            <div className="sbr-group">
+              <label>Type</label>
+              <select
+                className="sbr-select"
+                value={form.type}
+                onChange={update("type")}
+              >
+                <option value="">Choose a type...</option>
+                {TYPE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Field
               label="Website"
               type="url"
@@ -292,6 +301,9 @@ console.log("approveLink:", approveLink);
               value={form.website}
               onChange={update("website")}
             />
+          </div>
+
+          <div className="sbr-row">
             <Field
               label="Phone Number"
               type="tel"
