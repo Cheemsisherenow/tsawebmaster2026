@@ -111,6 +111,7 @@ const IndividualIcon = ({ resource, position, onHover, onSelect }) => {
         }}
         onClick={(e) => {
           if (!interactive) return;
+          console.log("card clicked")
           e.stopPropagation();
           onSelect?.(resource);
         }}

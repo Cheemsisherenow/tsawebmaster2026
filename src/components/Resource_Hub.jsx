@@ -409,6 +409,9 @@ const Resource_Hub = () => {
                       className="w-full h-[40%] object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => (e.target.src = 'https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found')}
                     />
+                    <div className="absolute top-0 my-2 mx-2 ">
+                        {event.type}
+                    </div>
                   </div>
 
                     <div className="absolute flex flex-col justify-end w-full h-full px-5 pb-5 ">
@@ -428,6 +431,9 @@ const Resource_Hub = () => {
                                         {formatDate(event.event_date) || 'Flexible'}
                                         </span>
                                     </div>
+                                    <a className="text-xm truncate" href={event.link} onClick={(e) => e.stopPropagation()}>
+                                        {event.link}
+                                    </a>
                                     <div className="flex flex-col pt-4 items-start gap-4">
                                         <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">{event.description}</p>
                                         <hr className="w-full"/>

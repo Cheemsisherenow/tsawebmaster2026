@@ -1,13 +1,15 @@
-import { React, useRef } from 'react'
+import { React, useRef, useState } from 'react'
 import { pageNavigation } from '../store'
 import FinalSphere from './Globe/FinalSphere'
 import Statistics from './Statistics'
 import Highlight from './Highlight'
 import Location from './Location'
+import ExpandedCard from './Globe/ExpandedCard'
 
 const Home = () => {
     const changeCurrentPage = pageNavigation((state) => state.changeCurrentPage)
     const sphereRef = useRef(null)
+    const [expanded, setExpanded] = useState(null);
 
     return (
         <div>
@@ -32,13 +34,14 @@ const Home = () => {
                 </div>
 
                 <div ref={sphereRef} className='sphereBox'>
-                    <FinalSphere />
+                    <FinalSphere onSelect={setExpanded}/>
                 </div>
             </section>
 
             <Statistics sphereRef={sphereRef} />
             <Highlight />
             <Location/>
+            <ExpandedCard card={expanded} onClose={() => setExpanded(null)}/>
             
         </div>
     )
