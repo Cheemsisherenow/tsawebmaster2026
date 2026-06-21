@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
+import { pageNavigation } from "../store";
 
 
 const Resource_Hub = () => {
@@ -10,6 +11,9 @@ const Resource_Hub = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
+
+    const selectedOpportunityId = pageNavigation((state) => state.selectedOpportunityId);
+    const setSelectedOpportunityId = pageNavigation((state) => state.setSelectedOpportunityId);
 
   // --- Separate filter + sort fields (no longer one combined dropdown) ---
   const [cityFilter, setCityFilter] = useState('');       // dropdown
@@ -48,6 +52,27 @@ const Resource_Hub = () => {
     };
     fetchOpportunities();
   }, []);
+
+  useEffect(() => {
+    if (!selectedOpportunityId || !events.length) return;
+    const match = events.find((e) => String(e.id) === String(selectedOpportunityId));
+    if (match) {
+      setSelectedEvent(match);
+      setSelectedOpportunityId(null);   // clear so it won't re-open on the next visit
+    }
+  }, [selectedOpportunityId, events]);
+
+  useEffect(() => {
+    if (isLoading || !events.length) return;
+    const targetId = new URLSearchParams(window.location.search).get('opportunity');
+    if (!targetId) return;
+    const match = events.find((e) => String(e.id) === String(targetId));
+    if (match) {
+      setSelectedEvent(match);
+      // clean the param so a refresh doesn't keep re-opening it
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [isLoading, events]);
 
   // location comes in as "City, GA" — pull just the city out for the dropdown.
   const getCity = (loc) => {
@@ -238,7 +263,7 @@ const Resource_Hub = () => {
   }
 
   return (
-    <section className="mt-[18vh]" ref={topRef}>
+    <section className="mt-[18vh]" ref={topRef} id="resource_hub">
       <div className="text-center mb-10">
         <h1 className="text-7xl font-bold text-gray-900 mb-4">Discover Resources in Gwinnett</h1>
         <p className="text-gray-600 text-2xl">

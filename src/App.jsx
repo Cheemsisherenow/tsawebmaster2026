@@ -6,6 +6,7 @@ import Resource_Hub from './components/Resource_Hub';
 import Discover from './components/Swiping';
 import Submit_Resources from './components/SubmitResources';
 import Footer from './components/Footer';
+import Get_Involved from './Get_Involved';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
