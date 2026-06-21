@@ -1,24 +1,35 @@
-import { React, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import clsx from "clsx";
 
+const API_URL = 'https://volunteer-api-x37c.onrender.com/api/opportunities';
+
+// same parser the Resource Hub uses: "Duluth, GA" -> "Duluth"
+const getCity = (loc) => {
+  if (!loc) return '';
+  const parts = String(loc).split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  if (/^[A-Za-z]{2}$/.test(last)) return parts[parts.length - 2];
+  return parts[0];
+};
+
 const Location = () => {
-    const coordinates = [];
+    const [events, setEvents] = useState([]);
     const [active, setActive] = useState(null);
+    const [categoryFilter, setCategoryFilter] = useState(null);
     const isAnimating = useRef(false);
     const listRef = useRef(null);
-    const [categoryFilter, setCategoryFilter] = useState(null);
 
-    const dataList = {
-        Suwanee: [
-            { id: 1, title: "Keep Gwinnett Beautiful", desc: "Volunteer cleanups and tree plantings.", category: "Food" },
-            { id: 2, title: "Suwanee Community Garden", desc: "Help grow local fruits and veggies.", category: "Environmental" },
-            { id: 3, title: "Gwinnett Food Cooperative", desc: "Distribute fresh meals to neighbors.", category: "Food" },
-            { id: 4, title: "Eco-Clean Trail Restoration", desc: "Clear debris and build local nature pathways.", category: "Environmental" },
-            { id: 5, title: "Suwanee Harvest Fest", desc: "Logistics helper for food distribution events.", category: "Food" },
-        ]
-    };
+    // pull the same data the Resource Hub uses
+    useEffect(() => {
+        fetch(API_URL)
+            .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(setEvents)
+            .catch((err) => console.error('Failed to fetch opportunities:', err));
+    }, []);
 
     const handleClick = (tabKey) => {
         if (active === tabKey || isAnimating.current) return;
@@ -51,7 +62,7 @@ const Location = () => {
         isAnimating.current = true;
 
         const cards = listRef.current?.querySelectorAll('.resource-card') || [];
-        
+
         const tl = gsap.timeline({
             onComplete: () => {
                 setCategoryFilter(categoryFilter === category ? null : category);
@@ -67,30 +78,36 @@ const Location = () => {
 
     useGSAP(() => {
         const cards = listRef.current?.querySelectorAll('.resource-card');
-        
+
         if (!active || !cards || cards.length === 0) {
             isAnimating.current = false;
             return;
         }
-    
-        gsap.fromTo(cards, 
+
+        gsap.fromTo(cards,
             { opacity: 0, y: 30, scale: 1 },
-            { 
-                opacity: 1, 
-                y: 0, 
-                stagger: 0.08, 
-                duration: 0.4, 
+            {
+                opacity: 1,
+                y: 0,
+                stagger: 0.08,
+                duration: 0.4,
                 ease: 'power2.out',
                 onComplete: () => {
-                    isAnimating.current = false; 
+                    isAnimating.current = false;
                 }
             }
         );
     }, [active, categoryFilter]);
 
-    const displayedCards = dataList[active]?.filter(card => 
-        categoryFilter === null ? true : card.category === categoryFilter
-    ) || [];
+    // real data: filter by the selected city, then by category (tag)
+    const displayedCards = useMemo(() => {
+        if (!active) return [];
+        return events.filter((e) => {
+            if (getCity(e.location) !== active) return false;
+            if (categoryFilter && e.tag !== categoryFilter) return false;
+            return true;
+        });
+    }, [events, active, categoryFilter]);
 
     return (
         <section id="location">
@@ -102,13 +119,10 @@ const Location = () => {
                     Find volunteer opportunities closest to your location
                 </p>
             </div>
-            
+
             <div className="map_container">
                 <div className="gwinnett_map">
-        
-     
                     <div className="coordinate_map">
-                        
                         {[
                             { name: "Buford", top: "7.4%", left: "63.5%" },
                             { name: "Suwanee", top: "24.6%", left: "44.6%" },
@@ -120,7 +134,7 @@ const Location = () => {
                             { name: "Snellville", top: "73.2%", left: "61.3%" },
                             { name: "Dacula", top: "33.1%", left: "89.2%" }
                         ].map((city) => (
-                            <button 
+                            <button
                                 key={city.name}
                                 onClick={() => handleClick(city.name)}
                                 style={{ top: city.top, left: city.left }}
@@ -128,14 +142,13 @@ const Location = () => {
                             >
                                <span className={clsx("w-4 h-4 rounded-full border-2 border-white shadow-sm transition-all duration-200",
                                 {"bg-[#286A6C] scale-125": active === city.name,"bg-slate-500 group-hover:bg-[#286A6C]": active !== city.name})} />
-                                <span className={clsx("text-lg font-bold transition-colors duration-200 select-none", 
+                                <span className={clsx("text-lg font-bold transition-colors duration-200 select-none",
                                 {'text-[#286A6C]': active === city.name, 'text-gray-7xl group-hover:text-[#286A6C]': active !== city.name})}
                                 >
                                     {city.name}
                                 </span>
                             </button>
                         ))}
-
                     </div>
                 </div>
 
@@ -150,22 +163,22 @@ const Location = () => {
                     </div>
 
                     <div className="category_selection">
-                        <button 
+                        <button
                         onClick={() => handleCategoryClick('Food')}
-                        className={clsx("category_button", 
+                        className={clsx("category_button",
                             {"bg-[#286A6C] text-white border-[#286A6C]": categoryFilter === 'Food', "bg-gray-100 text-gray-600 border-transparent": categoryFilter !== 'Food'}
                             )}
                         >
                             Food
                         </button>
 
-                        <button 
-                            onClick={() => handleCategoryClick('Environmental')}
+                        <button
+                            onClick={() => handleCategoryClick('Environment')}
                             className={clsx("category_button",
-                                {"bg-[#286A6C] text-white border-[#286A6C]": categoryFilter === 'Environmental',"bg-gray-100 text-gray-600 border-transparent": categoryFilter !== 'Environmental'}
+                                {"bg-[#286A6C] text-white border-[#286A6C]": categoryFilter === 'Environment',"bg-gray-100 text-gray-600 border-transparent": categoryFilter !== 'Environment'}
                             )}
                         >
-                            Environmental
+                            Environment
                         </button>
                     </div>
 
@@ -173,13 +186,13 @@ const Location = () => {
                         {!active ? (
                             <p className="text-center text-gray-400 my-auto text-lg font-medium">Click a city map location to start exploration.</p>
                         ) : displayedCards.length === 0 ? (
-                            <p className="text-center text-gray-400 my-auto text-lg font-medium">No results match this category.</p>
+                            <p className="text-center text-gray-400 my-auto text-lg font-medium">No opportunities here yet — try another city or category.</p>
                         ) : (
                             displayedCards.map((card) => (
                                 <div key={card.id} className="resource-card opacity-0 w-full min-h-[45%] bg-[#D8EAE8] p-5 rounded-2xl shrink-0 shadow-sm">
-                                    <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">{card.category || "General"}</span>
+                                    <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">{card.tag || "General"}</span>
                                     <h4 className="text-2xl font-bold text-[#286A6C] mt-0.5">{card.title}</h4>
-                                    <p className="text-gray-6xl mt-2 font-medium leading-relaxed">{card.desc}</p>
+                                    <p className="text-gray-6xl mt-2 font-medium leading-relaxed">{card.description}</p>
                                 </div>
                             ))
                         )}

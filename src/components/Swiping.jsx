@@ -1,111 +1,125 @@
-import { useRef, useState, useCallback, useLayoutEffect } from "react";
+import { useRef, useState, useCallback, useLayoutEffect, useEffect, useMemo } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
+import { pageNavigation } from "../store";
 
 gsap.registerPlugin(Draggable);
 
-/**
- * Discover — volunteer opportunity swiper.
- *
- * Drag/swipe right to keep, left to pass; undo, reset, match counter,
- * end screen. Swipe mechanics run on GSAP Draggable. Cards use the teal
- * Resource_Hub design. All styling is Tailwind utilities (no inline CSS,
- * no px-based arbitrary values).
- */
-
-const SEED = [
-  {
-    id: "s1",
-    title: "Food Bank Sorting Drive",
-    org: "Gwinnett County Food Bank",
-    desc: "Help sort donated food items for families in need. Great for groups and first-timers!",
-    img: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&h=500&fit=crop",
-    date: "Feb 15, 2026",
-    duration: "3 hours",
-    loc: "Lawrenceville, GA",
-    tag: "Food",
-  },
-  {
-    id: "s2",
-    title: "Community Tree Planting",
-    org: "Gwinnett Parks & Recreation",
-    desc: "Plant native trees and beautify local parks. Tools and gloves provided!",
-    img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop",
-    date: "Feb 22, 2026",
-    duration: "3 hours",
-    loc: "Duluth, GA",
-    tag: "Environment",
-  },
-  {
-    id: "s3",
-    title: "After-School Tutoring",
-    org: "Gwinnett Public Library",
-    desc: "Tutor elementary students in reading and math. Super rewarding, we promise.",
-    img: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=500&fit=crop",
-    date: "Every Tuesday",
-    duration: "2 hours",
-    loc: "Suwanee, GA",
-    tag: "Education",
-  },
-  {
-    id: "s4",
-    title: "Neighborhood Cleanup Day",
-    org: "Keep Gwinnett Beautiful",
-    desc: "Pick up litter and beautify public spaces together. Trash bags provided.",
-    img: "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=800&h=500&fit=crop",
-    date: "Mar 1, 2026",
-    duration: "3 hours",
-    loc: "Lilburn, GA",
-    tag: "Environment",
-  },
-  {
-    id: "s5",
-    title: "Soup Kitchen Service",
-    org: "Gwinnett Hope Shelter",
-    desc: "Prepare and serve meals to those experiencing homelessness. Meaningful work.",
-    img: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&h=500&fit=crop",
-    date: "Every Saturday",
-    duration: "3 hours",
-    loc: "Duluth, GA",
-    tag: "Food",
-  },
-];
+const API_URL = "https://volunteer-api-x37c.onrender.com/api/opportunities";
 
 const SWIPE_THRESHOLD = 100;
 const TINT_THRESHOLD = 60;
 
-export default function Discover() {
-  // Deck renders bottom-up: last item in the array is the top card.
-  const [deck, setDeck] = useState(SEED);
-  const [matched, setMatched] = useState([]);
-  const [lastSwiped, setLastSwiped] = useState(null);
+const formatDate = (s) => {
+  if (!s) return "Flexible";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return "Flexible";
+  d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
 
-  const topRef = useRef(null);   // the current top <article>
-  const flingRef = useRef(null); // lets the buttons trigger the same swipe
+const getCity = (loc) => {
+  if (!loc) return "";
+  const parts = String(loc).split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  if (/^[A-Za-z]{2}$/.test(last)) return parts[parts.length - 2];
+  return parts[0];
+};
+
+const selectClass =
+  "w-full rounded-lg border border-[#D4D3D3] bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#286A6C]/30 cursor-pointer";
+const inputClass =
+  "w-full rounded-lg border border-[#D4D3D3] bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#286A6C]/30";
+
+export default function Discover() {
+  const [all, setAll] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [lastSwiped, setLastSwiped] = useState(null); // { item, dir }
+  const [passedIds, setPassedIds] = useState(() => new Set());
+  const [isLoading, setIsLoading] = useState(true);
+
+  // filters
+  const [cityFilter, setCityFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [nameQuery, setNameQuery] = useState("");
+
+  const savedResources = pageNavigation((s) => s.savedResources);
+  const addSaved = pageNavigation((s) => s.addSaved);
+  const removeSaved = pageNavigation((s) => s.removeSaved);
+
+  const topRef = useRef(null);
+  const flingRef = useRef(null);
+
+  useEffect(() => {
+    fetch(API_URL)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((data) => { setAll(data); setIsLoading(false); })
+      .catch((err) => { console.error("Failed to fetch opportunities:", err); setIsLoading(false); });
+  }, []);
+
+  const savedIds = useMemo(() => new Set(savedResources.map((r) => String(r.id))), [savedResources]);
+
+  const cityOptions = useMemo(
+    () => Array.from(new Set(all.map((e) => getCity(e.location)).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [all]
+  );
+  const categoryOptions = useMemo(
+    () => Array.from(new Set(all.map((e) => e.tag).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [all]
+  );
+
+  // the visible deck: not liked, not passed, matches the filters
+  const deck = useMemo(() => {
+    const name = nameQuery.trim().toLowerCase();
+    return all.filter((e) => {
+      if (savedIds.has(String(e.id))) return false;     // already liked -> never reappears
+      if (passedIds.has(String(e.id))) return false;    // passed this session
+      if (cityFilter && getCity(e.location) !== cityFilter) return false;
+      if (categoryFilter && e.tag !== categoryFilter) return false;
+      if (name && !(e.title || "").toLowerCase().includes(name)) return false;
+      return true;
+    });
+  }, [all, savedIds, passedIds, cityFilter, categoryFilter, nameQuery]);
 
   const topCard = deck[deck.length - 1];
-  const isDone = deck.length === 0;
+  const anyFilterActive = cityFilter || categoryFilter || nameQuery;
 
   const commitSwipe = useCallback((dir, item) => {
-    setLastSwiped(item);
-    if (dir === "right") setMatched((m) => [...m, item]);
-    setDeck((d) => d.filter((x) => x.id !== item.id));
-  }, []);
+    setLastSwiped({ item, dir });
+    if (dir === "right") {
+      setMatched((m) => [...m, item]);
+      addSaved(item);
+    } else {
+      setPassedIds((s) => new Set(s).add(String(item.id)));
+    }
+  }, [addSaved]);
 
   const undo = useCallback(() => {
     if (!lastSwiped) return;
-    setDeck((d) => [...d, lastSwiped]);
-    setMatched((m) => m.filter((x) => x.id !== lastSwiped.id));
+    const { item, dir } = lastSwiped;
+    if (dir === "right") {
+      removeSaved(item.id);
+      setMatched((m) => m.filter((x) => x.id !== item.id));
+    } else {
+      setPassedIds((s) => { const n = new Set(s); n.delete(String(item.id)); return n; });
+    }
     setLastSwiped(null);
-  }, [lastSwiped]);
+  }, [lastSwiped, removeSaved]);
 
   const reset = useCallback(() => {
-    setDeck(SEED);
+    setPassedIds(new Set());
     setMatched([]);
     setLastSwiped(null);
   }, []);
 
-  // Wire up Draggable on whichever card is currently on top.
+  const clearFilters = () => {
+    setCityFilter("");
+    setCategoryFilter("");
+    setNameQuery("");
+  };
+
   useLayoutEffect(() => {
     const el = topRef.current;
     if (!el || !topCard) return;
@@ -113,7 +127,6 @@ export default function Discover() {
     const keepEl = el.querySelector('[data-stamp="keep"]');
     const passEl = el.querySelector('[data-stamp="pass"]');
 
-    // Reset the new top card to a clean resting pose.
     gsap.set(el, { x: 0, y: 0, rotation: 0, opacity: 1, borderColor: "#286A6C" });
     gsap.set([keepEl, passEl], { opacity: 0 });
 
@@ -162,23 +175,76 @@ export default function Discover() {
   return (
     <section className="min-h-screen bg-[#F7F8F3] pt-[18vh] text-[#1F3D2B]">
       <div className="mx-auto max-w-sm px-7 pb-24">
-        {isDone ? (
-          <EndScreen count={matched.length} onReset={reset} />
+        {isLoading ? (
+          <div className="flex h-[32rem] flex-col items-center justify-center gap-4">
+            <div className="h-12 w-12 rounded-full border-4 border-[#286A6C]/20 border-t-[#286A6C] animate-spin" />
+            <p className="font-semibold tracking-wide text-[#286A6C]">Loading opportunities…</p>
+          </div>
         ) : (
           <>
-            <CardStack deck={deck} topRef={topRef} />
+            {all.length > 0 && (
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#D4D3D3] bg-white p-4 shadow-sm">
+                <div className="flex gap-3">
+                  <select className={selectClass} value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
+                    <option value="">All cities</option>
+                    {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <select className={selectClass} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                    <option value="">All categories</option>
+                    {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="Search by name"
+                  value={nameQuery}
+                  onChange={(e) => setNameQuery(e.target.value)}
+                />
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span><span className="font-semibold text-[#286A6C]">{deck.length}</span> to swipe</span>
+                  {anyFilterActive && (
+                    <button
+                      onClick={clearFilters}
+                      className="rounded-md border border-[#D4D3D3] px-2 py-1 font-medium text-gray-500 hover:border-[#286A6C] hover:text-[#286A6C]"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
-            <Controls
-              onSkip={() => flingRef.current?.("left")}
-              onSave={() => flingRef.current?.("right")}
-              onUndo={undo}
-              canUndo={!!lastSwiped}
-            />
+            {deck.length === 0 ? (
+              anyFilterActive ? (
+                <div className="rounded-3xl border border-[#D4D3D3] bg-white px-8 py-16 text-center shadow-sm">
+                  <div className="text-5xl">🔍</div>
+                  <h3 className="mt-4 text-xl font-bold text-gray-900">Nothing matches those filters</h3>
+                  <p className="mt-2 text-sm text-[#1F3D2B]/70">Try a different city or category.</p>
+                  <button onClick={clearFilters} className="mt-6 rounded-lg bg-[#286A6C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1F5557]">
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <EndScreen count={matched.length} onReset={reset} />
+              )
+            ) : (
+              <>
+                <CardStack deck={deck} topRef={topRef} />
 
-            {matched.length > 0 && (
-              <p className="mt-6 text-center text-base font-bold text-[#2F6B4F]">
-                <span aria-hidden>🌱</span> {matched.length} kept so far
-              </p>
+                <Controls
+                  onSkip={() => flingRef.current?.("left")}
+                  onSave={() => flingRef.current?.("right")}
+                  onUndo={undo}
+                  canUndo={!!lastSwiped}
+                />
+
+                {matched.length > 0 && (
+                  <p className="mt-6 text-center text-base font-bold text-[#2F6B4F]">
+                    <span aria-hidden>🌱</span> {matched.length} kept so far
+                  </p>
+                )}
+              </>
             )}
           </>
         )}
@@ -193,7 +259,7 @@ function CardStack({ deck, topRef }) {
   return (
     <div className="relative mb-8 h-[32rem]">
       {deck.map((o, i) => {
-        const depth = deck.length - 1 - i; // 0 = top
+        const depth = deck.length - 1 - i;
         const isTop = depth === 0;
         const lift = Math.min(depth, 2);
 
@@ -211,15 +277,13 @@ function CardStack({ deck, topRef }) {
                 : "pointer-events-none transition-transform duration-300"
             }`}
           >
-            {/* image strip */}
             <img
-              src={o.img}
+              src={o.img_url}
               alt={o.title}
               className="h-2/5 w-full object-cover transition-transform duration-500 group-hover:scale-105"
               onError={(e) => (e.target.src = "https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found")}
             />
 
-            {/* floating content card */}
             <div className="absolute inset-0 flex flex-col justify-end px-5 pb-5">
               <div className="flex h-3/4 flex-col rounded-lg bg-[#F7F8F3] p-5 shadow-lg">
                 <div className="mb-3 flex items-start justify-between gap-3">
@@ -235,13 +299,12 @@ function CardStack({ deck, topRef }) {
                   <div className="text-sm font-medium text-gray-800">{o.org}</div>
 
                   <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#1F3D2B]/65">
-                    <Meta icon="📅">{o.date}</Meta>
-                    <Meta icon="⏰">{o.duration}</Meta>
-                    <Meta icon="📍">{o.loc}</Meta>
+                    <Meta icon="📅">{formatDate(o.event_date)}</Meta>
+                    {o.location && <Meta icon="📍">{o.location}</Meta>}
                   </dl>
 
                   <div className="flex flex-col items-start gap-4 pt-4">
-                    <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">{o.desc}</p>
+                    <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">{o.description}</p>
                     <hr className="w-full" />
                   </div>
                 </div>
@@ -254,17 +317,10 @@ function CardStack({ deck, topRef }) {
               </div>
             </div>
 
-            {/* drag verdict stamps — opacity driven by GSAP */}
-            <span
-              data-stamp="keep"
-              className="absolute left-5 top-6 z-20 -rotate-12 rounded-lg border-2 border-[#2F6B4F] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#2F6B4F] opacity-0"
-            >
+            <span data-stamp="keep" className="absolute left-5 top-6 z-20 -rotate-12 rounded-lg border-2 border-[#2F6B4F] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#2F6B4F] opacity-0">
               Keep
             </span>
-            <span
-              data-stamp="pass"
-              className="absolute right-5 top-6 z-20 rotate-12 rounded-lg border-2 border-[#C2603A] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#C2603A] opacity-0"
-            >
+            <span data-stamp="pass" className="absolute right-5 top-6 z-20 rotate-12 rounded-lg border-2 border-[#C2603A] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#C2603A] opacity-0">
               Pass
             </span>
           </article>
@@ -286,50 +342,23 @@ function Meta({ icon, children }) {
 /* ------------------------------------------------------------------ */
 
 function Controls({ onSkip, onSave, onUndo, canUndo }) {
-    return (
-      <div className="flex items-end justify-center gap-6">
-        <div className="flex flex-col items-center gap-2">
-          <RoundBtn
-            onClick={onSkip}
-            label="Pass"
-            className="h-16 w-16 bg-[#F3E2D6] text-[#C2603A] hover:bg-[#ECD3C2]"
-          >
-            ✕
-          </RoundBtn>
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#C2603A]">Pass</span>
-        </div>
-  
-        <div className="flex flex-col items-center gap-2">
-          <RoundBtn
-            onClick={onUndo}
-            label="Undo last"
-            disabled={!canUndo}
-            className="h-12 w-12 bg-[#EADFC6] text-[#1F3D2B]/70 hover:bg-[#E0D3B5] disabled:opacity-40"
-          >
-            ↻
-          </RoundBtn>
-          <span
-            className={`text-xs font-semibold uppercase tracking-wide transition-opacity ${
-              canUndo ? "text-[#1F3D2B]/70" : "text-[#1F3D2B]/30"
-            }`}
-          >
-            Undo
-          </span>
-        </div>
-  
-        <div className="flex flex-col items-center gap-2">
-          <RoundBtn
-            onClick={onSave}
-            label="Keep"
-            className="h-16 w-16 bg-[#286A6C] text-[#F7F8F3] hover:bg-[#1F5557]"
-          >
-            ♥
-          </RoundBtn>
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#286A6C]">Keep</span>
-        </div>
+  return (
+    <div className="flex items-end justify-center gap-6">
+      <div className="flex flex-col items-center gap-2">
+        <RoundBtn onClick={onSkip} label="Pass" className="h-16 w-16 bg-[#F3E2D6] text-[#C2603A] hover:bg-[#ECD3C2]">✕</RoundBtn>
+        <span className="text-xs font-semibold uppercase tracking-wide text-[#C2603A]">Pass</span>
       </div>
-    );
-  }
+      <div className="flex flex-col items-center gap-2">
+        <RoundBtn onClick={onUndo} label="Undo last" disabled={!canUndo} className="h-12 w-12 bg-[#EADFC6] text-[#1F3D2B]/70 hover:bg-[#E0D3B5] disabled:opacity-40">↻</RoundBtn>
+        <span className={`text-xs font-semibold uppercase tracking-wide transition-opacity ${canUndo ? "text-[#1F3D2B]/70" : "text-[#1F3D2B]/30"}`}>Undo</span>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <RoundBtn onClick={onSave} label="Keep" className="h-16 w-16 bg-[#286A6C] text-[#F7F8F3] hover:bg-[#1F5557]">♥</RoundBtn>
+        <span className="text-xs font-semibold uppercase tracking-wide text-[#286A6C]">Keep</span>
+      </div>
+    </div>
+  );
+}
 
 function RoundBtn({ children, label, className = "", ...props }) {
   return (

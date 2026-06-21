@@ -10,6 +10,9 @@ const Resource_Hub = () => {
   // const [typeFilter, setTypeFilter] = useState('');
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  const savedResources = pageNavigation((s) => s.savedResources);
+  const toggleSaved = pageNavigation((s) => s.toggleSaved);
+
   const [currentPage, setCurrentPage] = useState(1);
 
     const selectedOpportunityId = pageNavigation((state) => state.selectedOpportunityId);
@@ -402,6 +405,19 @@ const Resource_Hub = () => {
                   key={event.id}
                   onClick={() => setSelectedEvent(event)}
                 >
+                    <button
+                    onClick={(e) => { e.stopPropagation(); toggleSaved(event); }}
+                    className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/90 shadow hover:bg-white transition-colors"
+                    aria-label="Save"
+                    >
+                        <svg
+                            className="h-5 w-5" viewBox="0 0 24 24" strokeWidth="2" stroke="#286A6C"
+                            fill={savedResources.some((r) => String(r.id) === String(event.id)) ? '#286A6C' : 'none'}
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </button>
                   <div className="relative overflow-hidden h-full">
                     <img
                       src={event.img_url}

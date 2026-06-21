@@ -36,7 +36,7 @@ const FinalSphere = ({ onSelect }) => {
       </div>
 
       {isLoading && (
-        <div className="absolute inset-0 z-40 grid place-items-center bg-[#F7F8F3]">
+        <div className="absolute inset-0 z-40 grid place-items-center bg-transparent">
           <div className="flex flex-col items-center gap-4">
             <div className="h-12 w-12 rounded-full border-4 border-[#286A6C]/20 border-t-[#286A6C] animate-spin" />
             <p className="text-[#286A6C] font-semibold tracking-wide">Loading resources…</p>

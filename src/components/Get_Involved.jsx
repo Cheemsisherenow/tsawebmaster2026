@@ -1,23 +1,21 @@
 import React, { useState } from "react";
 import emailjs from "@emailjs/browser";
-const C = {
-  forest: "#1F3D2B",
-  moss: "#2F6B4F",
-  mossDark: "#255840",
-  clay: "#C2603A",
-  cream: "#F7F1E3",
-  sand: "#EADFC6",
-  paper: "#FFFDF6",
-};
+
+const REQUIRED = ["name", "email", "reason"];
+
 export default function Get_Involved() {
+  
   const [form, setForm] = useState({
     name: "",
     email: "",
-    reason: "volunteer",
+    reason: "",
     message: "",
   });
+  
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
   const reasons = [
     { value: "volunteer", label: "I want to volunteer" },
     { value: "partner", label: "I want to partner" },
@@ -28,23 +26,34 @@ export default function Get_Involved() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+    if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }));
+  };
+
+  const validate = () => {
+    const next = {};
+    for (const k of REQUIRED) {
+      if (!form[k].trim()) next[k] = "This field is required.";
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     setSubmitting(true);
     try {
       await emailjs.send(
         "service_1d0iguh",
         "template_u84796c",
         {
-            name: form.name,
-            email: form.email,
-            reason: form.reason,
-            message: form.message,
+          name: form.name,
+          email: form.email,
+          reason: form.reason,
+          message: form.message,
         },
         "ZjMpFzBaeqBM-ZXP0"
-       );
+      );
       setSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -56,23 +65,32 @@ export default function Get_Involved() {
 
   const handleReset = () => {
     setSubmitted(false);
-    setForm({ name: "", email: "", reason: "volunteer", message: "" });
+    setErrors({});
+    setForm({ name: "", email: "", reason: "", message: "" });
   };
 
+  // shared input styling, with an invalid (red) state
+  const fieldClass = (key) =>
+    `w-full rounded-md px-4 py-3 text-sm border focus:outline-none focus:ring-2 transition ${
+      errors[key]
+        ? "border-red-400 focus:ring-red-200"
+        : "border-gray-200 focus:border-[#286A6C] focus:ring-[#286A6C]/30"
+    }`;
+
   return (
-    <main className="w-full">
-      <div className="max-w-100% mx-auto px-6 pt-35 text-center">
+    <main className="w-[92vw] mx-[4vw] mt-[18vh]">
+      <div className="max-w-100% text-start">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-3">
           Ready to Make a Difference?
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
+        <p className="text-gray-500 max-w-2xl text-start">
           Whether you want to volunteer, partner with us, or say hi, we would love to receive feedback from you!
         </p>
       </div>
 
-      <section className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <section className="flex w-full py-12 gap-8 justify-between">
         {/* Left: Contact Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 flex min-w-[65%] items-center justify-center">
           {submitted ? (
             <div className="text-center">
               <div className="mb-6">
@@ -95,20 +113,21 @@ export default function Get_Involved() {
             <form onSubmit={handleSubmit} className="w-full space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  What should we call you?
+                  What should we call you? <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Your name"
-                  className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className={fieldClass("name")}
                 />
+                {errors.name && <span className="block text-xs font-medium text-red-500 mt-1.5">{errors.name}</span>}
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Where can we reach you?
+                  Where can we reach you? <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="email"
@@ -116,26 +135,29 @@ export default function Get_Involved() {
                   onChange={handleChange}
                   placeholder="your@email.com"
                   type="email"
-                  className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className={fieldClass("email")}
                 />
+                {errors.email && <span className="block text-xs font-medium text-red-500 mt-1.5">{errors.email}</span>}
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  What brings you here?
+                  What brings you here? <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="reason"
                   value={form.reason}
                   onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className={`${fieldClass("reason")} bg-white`}
                 >
+                  <option value="">Choose a category...</option>
                   {reasons.map((r) => (
                     <option key={r.value} value={r.value}>
                       {r.label}
                     </option>
                   ))}
                 </select>
+                {errors.reason && <span className="block text-xs font-medium text-red-500 mt-1.5">{errors.reason}</span>}
               </div>
 
               <div>
@@ -148,7 +170,7 @@ export default function Get_Involved() {
                   onChange={handleChange}
                   placeholder="Tell us what's up..."
                   rows={5}
-                  className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className={fieldClass("message")}
                 />
               </div>
 
@@ -156,7 +178,7 @@ export default function Get_Involved() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-5 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-5 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#286A6C]/40 disabled:opacity-60"
                 >
                   {submitting ? "Sending..." : "Send It →"}
                 </button>
@@ -166,7 +188,7 @@ export default function Get_Involved() {
         </div>
 
         {/* Right: FAQ Card */}
-        <aside className="bg-gray-50 rounded-2xl shadow-inner p-8">
+        <aside className="bg-gray-50 rounded-2xl shadow-inner p-8 flex-grow">
           <h2 className="text-2xl font-extrabold text-gray-900 mb-4">Quick FAQs</h2>
 
           <dl className="divide-y divide-gray-200 text-sm text-gray-600">

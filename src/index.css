@@ -20,12 +20,15 @@ html, body {
   header {
     @apply w-screen fixed top-0 left-0 z-50 bg-[#286A6C] px-[4vw] text-white shadow-[0px_4px_12px_rgba(0,0,0,.5)];
     button {
-      @apply cursor-pointer h-full py-[1vw] px-8 hover:-translate-y-0.5 hover:bg-[#1f5254] transition-all duration-300 ease-in-out ;
+      @apply cursor-pointer h-full py-[1vw] px-8 hover:bg-[#1f5254] transition-all duration-300 ease-in-out ;
+      span {
+        @apply hover:-translate-y-0.5
+      }
     }
     nav {
-      @apply flex flex-row justify-between items-baseline text-2xl;
+      @apply flex flex-row justify-between items-center text-2xl;
       ul {
-        @apply flex flex-row text-xl;
+        @apply flex flex-row text-lg;
       }
     }
   }

@@ -2,7 +2,8 @@ export const headerLinks = [
     {label: "Home"},
     {label: "Resource Hub"},
     {label: "Match Me"},
-    {label: "Submit Resources"}
+    {label: "Saved Resources"},
+    {label: "Reference Page"}
 ]
 
 export const statistics = [

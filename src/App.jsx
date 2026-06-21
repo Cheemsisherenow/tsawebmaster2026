@@ -6,7 +6,8 @@ import Resource_Hub from './components/Resource_Hub';
 import Discover from './components/Swiping';
 import Submit_Resources from './components/SubmitResources';
 import Footer from './components/Footer';
-import Get_Involved from './Get_Involved';
+import Get_Involved from './components/Get_Involved';
+import Saved_Resources from './components/Saved_Resources';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
@@ -24,6 +25,8 @@ function App() {
         return <Discover />;
       case 'Submit Resources':
         return <Submit_Resources />;
+      case "Saved Resources":
+        return <Saved_Resources/>
       case 'Get Involved':
           return <Get_Involved />;
       default:
