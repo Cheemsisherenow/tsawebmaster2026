@@ -65,7 +65,7 @@ const Highlight = () => {
   return (
     <section id="highlights" ref={componentRef} className={isMobile ? 'highlights-mobile' : ''}>
       <div className="flex flex-col items-center">
-        <p className="text-4xl md:text-7xl text-[#286A6C]">Highlighted Resources</p>
+        <p className="text-4xl md:text-7xl text-[#286A6C] font-bold">Highlighted Resources</p>
         <p className="text-lg md:text-3xl">The ones making the biggest differences in Gwinnett</p>
       </div>
 

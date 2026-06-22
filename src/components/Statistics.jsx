@@ -62,7 +62,7 @@ const Statistics = ({ sphereRef }) => {
             });
 
             const targetX = (window.innerWidth  - rect.width)  / 2;
-            const targetY = (window.innerHeight - rect.height) / 2;
+            const targetY = (window.innerHeight - rect.height) / 2 + window.innerHeight * 0.08;
 
             st = gsap.to(el, {
                 scrollTrigger: {
@@ -143,6 +143,10 @@ const Statistics = ({ sphereRef }) => {
                     document.body.appendChild(el);
                     gsap.set(el, {
                         position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        margin: 0,
+                        transformOrigin: 'top left',
                         zIndex: 5,
                     });
                 },
@@ -222,7 +226,7 @@ const Statistics = ({ sphereRef }) => {
                 >
                     <div ref={starFieldRef} className="starfield" style={{ transformStyle: 'preserve-3d' }} />
 
-                    <div className="wordSection flex !flex-col !w-3/4 items-center justify-center absolute top-10 left-1/2 -translate-x-1/2">
+                    <div className="wordSection flex !flex-col !w-3/4 gap-2 items-center justify-center absolute top-20 left-1/2 -translate-x-1/2">
                         <p className="text-7xl">
                             Explore endless opportunities
                         </p>
@@ -233,7 +237,7 @@ const Statistics = ({ sphereRef }) => {
                     {statistics.map((i) => (
                         <div
                             key={i.id}
-                            className={clsx('wordSection', {'-translate-x-3/4 -translate-y-1/2': i.id % 2 !== 0, 'translate-x-3/4 translate-y-1/2':  i.id % 2 === 0,})}
+                            className={clsx('wordSection', {'-translate-x-full -translate-y-1/2': i.id % 2 !== 0, 'translate-x-full translate-y-1/2':  i.id % 2 === 0,})}
                             style={{ transformStyle: 'preserve-3d', }}
                         >
                             {i.id == 1 && (<InteractivePieChart/>)  }

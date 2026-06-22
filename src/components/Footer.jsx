@@ -33,6 +33,12 @@ const Footer = () => {
                 </button>
               </li>
             ))}
+            <li>
+              <button onClick={() => {}}>Submit Resources</button>
+            </li>
+            <li>
+              <button onClick={() => {}}>Message Us</button>
+            </li>
           </ul>
         </div>
       </div>

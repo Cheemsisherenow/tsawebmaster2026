@@ -21,7 +21,7 @@ const FinalSphere = ({ onSelect }) => {
         setResources(data);
         setIsLoading(false);
       })
-      .catch((err) => { console.error('Failed to fetch opportunities:', err); setIsLoading(false); });
+      .catch((err) => { console.error('Failed to fetch resources:', err); setIsLoading(false); });
   }, []);
 
   return (
@@ -30,10 +30,6 @@ const FinalSphere = ({ onSelect }) => {
         <ambientLight intensity={1} />
         <Sphere resources={resources} onHover={setHovered} onSelect={onSelect} />
       </Canvas>
-
-      <div className={clsx('title', { 'opacity-100': hovered, 'opacity-0': !hovered })}>
-        {hovered ?? ''}
-      </div>
 
       {isLoading && (
         <div className="absolute inset-0 z-40 grid place-items-center bg-transparent">

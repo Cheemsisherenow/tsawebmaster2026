@@ -8,6 +8,7 @@ import Submit_Resources from './components/SubmitResources';
 import Footer from './components/Footer';
 import Get_Involved from './components/Get_Involved';
 import Saved_Resources from './components/Saved_Resources';
+import Reference from './components/References';
 function App() {
   const currentPage = pageNavigation((state) => (state.currentPage));
   if (typeof window !== 'undefined') {
@@ -27,6 +28,8 @@ function App() {
         return <Submit_Resources />;
       case "Saved Resources":
         return <Saved_Resources/>
+      case "Reference Page":
+        return <Reference/>
       case 'Get Involved':
           return <Get_Involved />;
       default:

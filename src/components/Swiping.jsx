@@ -2,13 +2,52 @@ import { useRef, useState, useCallback, useLayoutEffect, useEffect, useMemo } fr
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { pageNavigation } from "../store";
+import ExpandedCard from "./Globe/ExpandedCard";
 
 gsap.registerPlugin(Draggable);
 
 const API_URL = "https://volunteer-api-x37c.onrender.com/api/opportunities";
-
 const SWIPE_THRESHOLD = 100;
 const TINT_THRESHOLD = 60;
+
+const BADGE_COLORS = [
+  { bg: 'bg-rose-50',    text: 'text-rose-700',    border: 'border-rose-200' },
+  { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200' },
+  { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  { bg: 'bg-sky-50',     text: 'text-sky-700',     border: 'border-sky-200' },
+  { bg: 'bg-violet-50',  text: 'text-violet-700',  border: 'border-violet-200' },
+  { bg: 'bg-teal-50',    text: 'text-teal-700',    border: 'border-teal-200' },
+  { bg: 'bg-orange-50',  text: 'text-orange-700',  border: 'border-orange-200' },
+  { bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', border: 'border-fuchsia-200' },
+  { bg: 'bg-lime-50',    text: 'text-lime-700',    border: 'border-lime-200' },
+  { bg: 'bg-cyan-50',    text: 'text-cyan-700',    border: 'border-cyan-200' },
+  { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200' },
+  { bg: 'bg-yellow-50',  text: 'text-yellow-700',  border: 'border-yellow-200' },
+  { bg: 'bg-green-50',   text: 'text-green-700',   border: 'border-green-200' },
+  { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200' },
+  { bg: 'bg-indigo-50',  text: 'text-indigo-700',  border: 'border-indigo-200' },
+  { bg: 'bg-purple-50',  text: 'text-purple-700',  border: 'border-purple-200' },
+  { bg: 'bg-pink-50',    text: 'text-pink-700',    border: 'border-pink-200' },
+  { bg: 'bg-slate-50',   text: 'text-slate-700',   border: 'border-slate-200' },
+];
+
+const TYPE_COLOR_MAP = {
+  'nonprofit/volunteer':{ bg: 'bg-teal-100/60',  text: 'border-teal-700', border: 'border-teal-200' },
+  'community/support service':   { bg: 'bg-amber-100/60', text: 'border-teal-700', border: 'border-amber-200' },
+  'community event': { bg: 'bg-rose-100/60',  text: 'border-teal-700', border: 'border-rose-200' },
+};
+
+const typeColorFor = (value) => {
+  const key = String(value).trim().toLowerCase();
+  return TYPE_COLOR_MAP[key]
+};
+
+const hashString = (str = '') => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (h << 5) - h + str.charCodeAt(i); h |= 0; }
+  return Math.abs(h);
+};
+const colorFor = (value) => BADGE_COLORS[hashString(String(value)) % BADGE_COLORS.length];
 
 const formatDate = (s) => {
   if (!s) return "Flexible";
@@ -28,21 +67,17 @@ const getCity = (loc) => {
   return parts[0];
 };
 
-const selectClass =
-  "w-full rounded-lg border border-[#D4D3D3] bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#286A6C]/30 cursor-pointer";
-const inputClass =
-  "w-full rounded-lg border border-[#D4D3D3] bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#286A6C]/30";
-
 export default function Discover() {
   const [all, setAll] = useState([]);
   const [matched, setMatched] = useState([]);
-  const [lastSwiped, setLastSwiped] = useState(null); // { item, dir }
+  const [lastSwiped, setLastSwiped] = useState(null);
   const [passedIds, setPassedIds] = useState(() => new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
 
-  // filters
   const [cityFilter, setCityFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [nameQuery, setNameQuery] = useState("");
 
   const savedResources = pageNavigation((s) => s.savedResources);
@@ -51,13 +86,13 @@ export default function Discover() {
 
   const topRef = useRef(null);
   const flingRef = useRef(null);
-  const lockRef = useRef(false); // blocks repeat swipes on the same card
+  const lockRef = useRef(false);
 
   useEffect(() => {
     fetch(API_URL)
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((data) => { setAll(data); setIsLoading(false); })
-      .catch((err) => { console.error("Failed to fetch opportunities:", err); setIsLoading(false); });
+      .catch((err) => { console.error("Failed to fetch resources:", err); setIsLoading(false); });
   }, []);
 
   const savedIds = useMemo(() => new Set(savedResources.map((r) => String(r.id))), [savedResources]);
@@ -70,22 +105,26 @@ export default function Discover() {
     () => Array.from(new Set(all.map((e) => e.tag).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
     [all]
   );
+  const typeOptions = useMemo(
+    () => Array.from(new Set(all.map((e) => e.type).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [all]
+  );
 
-  // the visible deck: not liked, not passed, matches the filters
   const deck = useMemo(() => {
     const name = nameQuery.trim().toLowerCase();
     return all.filter((e) => {
-      if (savedIds.has(String(e.id))) return false;     // already liked -> never reappears
-      if (passedIds.has(String(e.id))) return false;    // passed this session
+      if (savedIds.has(String(e.id))) return false;
+      if (passedIds.has(String(e.id))) return false;
       if (cityFilter && getCity(e.location) !== cityFilter) return false;
       if (categoryFilter && e.tag !== categoryFilter) return false;
+      if (typeFilter && e.type !== typeFilter) return false;
       if (name && !(e.title || "").toLowerCase().includes(name)) return false;
       return true;
     });
-  }, [all, savedIds, passedIds, cityFilter, categoryFilter, nameQuery]);
+  }, [all, savedIds, passedIds, cityFilter, categoryFilter, typeFilter, nameQuery]);
 
   const topCard = deck[deck.length - 1];
-  const anyFilterActive = cityFilter || categoryFilter || nameQuery;
+  const anyFilterActive = cityFilter || categoryFilter || typeFilter || nameQuery;
 
   const commitSwipe = useCallback((dir, item) => {
     setLastSwiped({ item, dir });
@@ -118,6 +157,7 @@ export default function Discover() {
   const clearFilters = () => {
     setCityFilter("");
     setCategoryFilter("");
+    setTypeFilter("");
     setNameQuery("");
   };
 
@@ -130,7 +170,7 @@ export default function Discover() {
 
     gsap.set(el, { x: 0, y: 0, rotation: 0, opacity: 1, borderColor: "#286A6C" });
     gsap.set([keepEl, passEl], { opacity: 0 });
-    lockRef.current = false; // new card is ready -> allow one swipe
+    lockRef.current = false;
 
     const drag = Draggable.create(el, {
       type: "x,y",
@@ -153,7 +193,7 @@ export default function Discover() {
     })[0];
 
     const fling = (dir) => {
-      if (lockRef.current) return; // ignore extra clicks while one is in flight
+      if (lockRef.current) return;
       lockRef.current = true;
       drag.disable();
       gsap.to(el, {
@@ -177,43 +217,57 @@ export default function Discover() {
   }, [topCard?.id, commitSwipe]);
 
   return (
-    <section className="min-h-screen bg-[#F7F8F3] pt-[18vh] text-[#1F3D2B]">
-      <div className="mx-auto max-w-sm px-7 pb-24">
+    <section id="discover">
+      <div className="discover-header">
+          <h1 className="discover-title">Swipe and Discover <span className="text-[#286A6C]"> Your Match</span></h1>
+          <p className="discover-subtitle">Swipe right to keep an opportunity, left to pass.</p>
+        </div>
+      <div className="discover-inner">
+
         {isLoading ? (
-          <div className="flex h-[32rem] flex-col items-center justify-center gap-4">
-            <div className="h-12 w-12 rounded-full border-4 border-[#286A6C]/20 border-t-[#286A6C] animate-spin" />
-            <p className="font-semibold tracking-wide text-[#286A6C]">Loading opportunities…</p>
+          <div className="discover-loading">
+            <div className="discover-spinner" />
+            <p className="discover-loading-text">Loading resources</p>
           </div>
         ) : (
           <>
             {all.length > 0 && (
-              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#D4D3D3] bg-white p-4 shadow-sm">
-                <div className="flex gap-3">
-                  <select className={selectClass} value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
-                    <option value="">All cities</option>
-                    {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <select className={selectClass} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                    <option value="">All categories</option>
-                    {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+              <div className="discover-filters">
+                <div className="discover-filter-selects">
+                  <div className="discover-field">
+                    <label className="discover-label">City</label>
+                    <select className="discover-select" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
+                      <option value="">All cities</option>
+                      {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="discover-field">
+                    <label className="discover-label">Category</label>
+                    <select className="discover-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                      <option value="">All categories</option>
+                      {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="discover-field">
+                    <label className="discover-label">Type</label>
+                    <select className="discover-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                      <option value="">All types</option>
+                      {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
                 </div>
+                <label className="discover-label">Name</label>
                 <input
                   type="text"
-                  className={inputClass}
+                  className="discover-input"
                   placeholder="Search by name"
                   value={nameQuery}
                   onChange={(e) => setNameQuery(e.target.value)}
                 />
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span><span className="font-semibold text-[#286A6C]">{deck.length}</span> to swipe</span>
+                <div className="discover-filter-meta">
+                  <span><span className="discover-count">{deck.length}</span> to swipe</span>
                   {anyFilterActive && (
-                    <button
-                      onClick={clearFilters}
-                      className="rounded-md border border-[#D4D3D3] px-2 py-1 font-medium text-gray-500 hover:border-[#286A6C] hover:text-[#286A6C]"
-                    >
-                      Clear
-                    </button>
+                    <button onClick={clearFilters} className="discover-clear">Clear</button>
                   )}
                 </div>
               </div>
@@ -221,112 +275,102 @@ export default function Discover() {
 
             {deck.length === 0 ? (
               anyFilterActive ? (
-                <div className="rounded-3xl border border-[#D4D3D3] bg-white px-8 py-16 text-center shadow-sm">
-                  <div className="text-5xl">🔍</div>
-                  <h3 className="mt-4 text-xl font-bold text-gray-900">Nothing matches those filters</h3>
-                  <p className="mt-2 text-sm text-[#1F3D2B]/70">Try a different city or category.</p>
-                  <button onClick={clearFilters} className="mt-6 rounded-lg bg-[#286A6C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1F5557]">
-                    Clear filters
-                  </button>
+                <div className="discover-nomatch">
+                  <div className="discover-nomatch-emoji">🔍</div>
+                  <h3 className="discover-nomatch-title">Nothing matches those filters</h3>
+                  <p className="discover-nomatch-text">Try a different city, category, or type.</p>
+                  <button onClick={clearFilters} className="discover-nomatch-btn">Clear filters</button>
                 </div>
               ) : (
                 <EndScreen count={matched.length} onReset={reset} />
               )
             ) : (
               <>
-                <CardStack deck={deck} topRef={topRef} />
-
+                <CardStack deck={deck} topRef={topRef} onView={setExpanded} />
                 <Controls
                   onSkip={() => flingRef.current?.("left")}
                   onSave={() => flingRef.current?.("right")}
                   onUndo={undo}
                   canUndo={!!lastSwiped}
                 />
-
-                {matched.length > 0 && (
-                  <p className="mt-6 text-center text-base font-bold text-[#2F6B4F]">
-                    <span aria-hidden>🌱</span> {matched.length} kept so far
-                  </p>
-                )}
               </>
             )}
           </>
         )}
       </div>
+
+      <ExpandedCard card={expanded} onClose={() => setExpanded(null)} />
     </section>
   );
 }
 
-/* ------------------------------------------------------------------ */
+function CardStack({ deck, topRef, onView }) {
+  const visible = deck.slice(-4);
 
-function CardStack({ deck, topRef }) {
   return (
-    <div className="relative mb-8 h-[32rem]">
-      {deck.map((o, i) => {
-        const depth = deck.length - 1 - i;
+    <div className="discover-stack">
+      {visible.map((o, i) => {
+        const depth = visible.length - 1 - i;
         const isTop = depth === 0;
         const lift = Math.min(depth, 2);
-
         const z = depth === 0 ? "z-30" : depth === 1 ? "z-20" : "z-10";
-        const pose =
-          depth === 0 ? "" : lift === 1 ? "scale-[0.965] translate-y-3" : "scale-[0.93] translate-y-6";
+        const pose = depth === 0 ? "" : lift === 1 ? "scale-[0.965] translate-y-3" : "scale-[0.93] translate-y-6";
+        const typeColor = typeColorFor(o.type);
+        const tagColor = colorFor(o.tag);
 
         return (
           <article
             key={o.id}
             ref={isTop ? topRef : null}
-            className={`group absolute inset-x-0 top-0 h-[30rem] select-none overflow-hidden rounded-3xl border border-[#286A6C] bg-[#F7F8F3] shadow-md ${z} ${pose} ${
-              isTop
-                ? "cursor-grab touch-none transition-shadow duration-300 hover:ring-4 hover:ring-[#286A6C]/40 active:cursor-grabbing"
-                : "pointer-events-none transition-transform duration-300"
-            }`}
+            className={`discover-card ${isTop ? "is-top" : "is-under"} ${z} ${pose}`}
           >
             <img
               src={o.img_url}
               alt={o.title}
-              className="h-2/5 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="discover-card-img"
               onError={(e) => (e.target.src = "https://placehold.co/800x500/e2e8f0/475569?text=Image+Not+Found")}
             />
+            {o.type && (
+              <div className="discover-type-badge">
+                <span className={`discover-type-pill ${typeColor.bg} ${typeColor.text} ${typeColor.border}`}>{o.type}</span>
+              </div>
+            )}
 
-            <div className="absolute inset-0 flex flex-col justify-end px-5 pb-5">
-              <div className="flex h-3/4 flex-col rounded-lg bg-[#F7F8F3] p-5 shadow-lg">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <h2 className="text-lg font-bold leading-tight text-gray-900 line-clamp-2">{o.title}</h2>
+            <div className="discover-card-overlay">
+              <div className="discover-card-panel">
+                <div className="discover-card-head">
+                  <h2 className="discover-card-title">{o.title}</h2>
                   {o.tag && (
-                    <span className="shrink-0 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
-                      {o.tag}
-                    </span>
+                    <span className={`discover-card-tag ${tagColor.bg} ${tagColor.text} ${tagColor.border}`}>{o.tag}</span>
                   )}
                 </div>
 
-                <div className="mb-4 flex flex-col gap-1">
-                  <div className="text-sm font-medium text-gray-800">{o.org}</div>
-
-                  <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#1F3D2B]/65">
+                <div className="discover-card-meta">
+                  <div className="discover-card-org">{o.org}</div>
+                  <dl className="discover-card-metarow">
                     <Meta icon="📅">{formatDate(o.event_date)}</Meta>
                     {o.location && <Meta icon="📍">{o.location}</Meta>}
                   </dl>
-
-                  <div className="flex flex-col items-start gap-4 pt-4">
-                    <p className="text-sm leading-relaxed text-gray-600 line-clamp-3">{o.description}</p>
+                  <div className="discover-card-descwrap">
+                    <p className="discover-card-desc">{o.description}</p>
                     <hr className="w-full" />
                   </div>
                 </div>
 
-                <div className="mt-auto flex w-full justify-start">
-                  <button className="rounded-md border border-[#286A6C] bg-transparent px-3 py-1.5 text-[#286A6C] shadow-md transition-all duration-300 hover:-translate-y-1 hover:bg-[#286A6C] hover:text-white hover:shadow-lg">
+                <div className="discover-card-actions">
+                  <button
+                    className="discover-card-btn"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); onView(o); }}
+                  >
                     View Details
                   </button>
                 </div>
               </div>
             </div>
 
-            <span data-stamp="keep" className="absolute left-5 top-6 z-20 -rotate-12 rounded-lg border-2 border-[#2F6B4F] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#2F6B4F] opacity-0">
-              Keep
-            </span>
-            <span data-stamp="pass" className="absolute right-5 top-6 z-20 rotate-12 rounded-lg border-2 border-[#C2603A] bg-[#FFFDF6]/90 px-3 py-1 text-lg font-black uppercase tracking-wider text-[#C2603A] opacity-0">
-              Pass
-            </span>
+            <span data-stamp="keep" className="discover-stamp keep">Keep</span>
+            <span data-stamp="pass" className="discover-stamp pass">Pass</span>
           </article>
         );
       })}
@@ -336,63 +380,39 @@ function CardStack({ deck, topRef }) {
 
 function Meta({ icon, children }) {
   return (
-    <dd className="flex items-center gap-1.5">
-      <span aria-hidden>{icon}</span>
-      {children}
-    </dd>
+    <dd className="discover-meta"><span aria-hidden>{icon}</span>{children}</dd>
   );
 }
 
-/* ------------------------------------------------------------------ */
-
 function Controls({ onSkip, onSave, onUndo, canUndo }) {
   return (
-    <div className="flex items-end justify-center gap-6">
-      <div className="flex flex-col items-center gap-2">
-        <RoundBtn onClick={onSkip} label="Pass" className="h-16 w-16 bg-[#F3E2D6] text-[#C2603A] hover:bg-[#ECD3C2]">✕</RoundBtn>
-        <span className="text-xs font-semibold uppercase tracking-wide text-[#C2603A]">Pass</span>
+    <div className="discover-controls">
+      <div className="discover-control">
+        <button onClick={onSkip} aria-label="Pass" className="discover-round discover-round--pass">✕</button>
+        <span className="discover-control-label discover-label--pass">Pass</span>
       </div>
-      <div className="flex flex-col items-center gap-2">
-        <RoundBtn onClick={onUndo} label="Undo last" disabled={!canUndo} className="h-12 w-12 bg-[#EADFC6] text-[#1F3D2B]/70 hover:bg-[#E0D3B5] disabled:opacity-40">↻</RoundBtn>
-        <span className={`text-xs font-semibold uppercase tracking-wide transition-opacity ${canUndo ? "text-[#1F3D2B]/70" : "text-[#1F3D2B]/30"}`}>Undo</span>
+      <div className="discover-control">
+        <button onClick={onUndo} aria-label="Undo last" disabled={!canUndo} className="discover-round discover-round--undo">↻</button>
+        <span className={`discover-control-label discover-label--undo ${canUndo ? "" : "is-off"}`}>Undo</span>
       </div>
-      <div className="flex flex-col items-center gap-2">
-        <RoundBtn onClick={onSave} label="Keep" className="h-16 w-16 bg-[#286A6C] text-[#F7F8F3] hover:bg-[#1F5557]">♥</RoundBtn>
-        <span className="text-xs font-semibold uppercase tracking-wide text-[#286A6C]">Keep</span>
+      <div className="discover-control">
+        <button onClick={onSave} aria-label="Keep" className="discover-round discover-round--keep">♥</button>
+        <span className="discover-control-label discover-label--keep">Keep</span>
       </div>
     </div>
   );
 }
 
-function RoundBtn({ children, label, className = "", ...props }) {
-  return (
-    <button
-      aria-label={label}
-      className={`flex items-center justify-center rounded-full text-2xl leading-none shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#286A6C] enabled:hover:scale-110 disabled:cursor-not-allowed ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-
 function EndScreen({ count, onReset }) {
   return (
-    <div className="rounded-3xl border-2 border-[#286A6C] bg-[#F7F8F3] px-8 py-16 text-center shadow-xl">
-      <div className="text-6xl">🌻</div>
-      <h3 className="mt-4 text-3xl font-black text-gray-900">That&apos;s the whole stack</h3>
-      <p className="mt-3 text-base text-[#1F3D2B]/70">
-        You kept <span className="font-bold text-[#286A6C]">{count}</span>{" "}
+    <div className="discover-end">
+      <div className="discover-end-emoji">🌻</div>
+      <h3 className="discover-end-title">That&apos;s the whole stack</h3>
+      <p className="discover-end-text">
+        You kept <span className="discover-end-num">{count}</span>{" "}
         {count === 1 ? "opportunity" : "opportunities"}.
       </p>
-      <button
-        onClick={onReset}
-        className="mt-8 rounded-xl bg-[#286A6C] px-7 py-3 text-sm font-bold text-[#F7F8F3] transition hover:bg-[#1F5557] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#286A6C]"
-      >
-        Browse again
-      </button>
+      <button onClick={onReset} className="discover-end-btn">Browse again</button>
     </div>
   );
 }

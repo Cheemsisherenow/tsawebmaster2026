@@ -80,7 +80,7 @@ export default function Get_Involved() {
     <main className="w-full px-4 sm:w-[92vw] sm:mx-[4vw] mt-20 pt-[5vh]">
       <div className="max-w-full text-start">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-3">
-          Ready to Make a Difference?
+          Ready to Make a <span className="text-[#286A6C]"> Difference?</span>
         </h1>
         <p className="text-gray-500 max-w-2xl text-start text-sm sm:text-base">
           Whether you want to volunteer, partner with us, or say hi, we would love to receive feedback from you!
