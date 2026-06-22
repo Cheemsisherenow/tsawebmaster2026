@@ -32,10 +32,10 @@ const REQUIRED = ["org", "category", "address", "description"];
 
 // shared field styling
 const baseField =
-  "w-full bg-white text-gray-800 text-sm rounded-lg px-4 py-2.5 border placeholder:text-gray-400 focus:outline-none focus:ring-2 transition";
-const okBorder = "border-[#D4D3D3] focus:border-[#286A6C] focus:ring-[#286A6C]/30";
+  "w-full bg-white text-gray-800 text-sm rounded-md px-4 py-3 border placeholder:text-gray-400 focus:outline-none focus:ring-2 transition";
+const okBorder = "border-gray-200 focus:border-[#286A6C] focus:ring-[#286A6C]/30";
 const errBorder = "border-red-400 focus:ring-red-200";
-const labelClass = "block text-sm font-semibold text-[#286A6C] uppercase tracking-wide mb-1.5";
+const labelClass = "block text-sm font-semibold text-gray-700 mb-2";
 
 const Chevron = () => (
   <svg
@@ -131,52 +131,56 @@ export default function Submit_Resources() {
 
   if (submitted) {
     return (
-      <div className="w-full max-w-2xl mx-auto pt-[18vh] pb-24 px-4">
-        <div className="bg-[#F7F8F3] border border-[#D4D3D3] rounded-2xl shadow-[4px_4px_8px_rgba(0,0,0,.2)] p-10 sm:p-12 text-center">
-          <div className="text-6xl">✅</div>
-          <h3 className="text-2xl font-bold text-gray-900 mt-4">Got it! Thanks for contributing.</h3>
-          <p className="text-gray-600 max-w-md mx-auto mt-3 leading-relaxed">
+      <main className="w-full px-4 sm:w-[92vw] sm:mx-[4vw] mt-20 sm:mt-[18vh]">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center max-w-2xl">
+          <div className="inline-block bg-green-100 rounded-full p-4 mb-4">
+            <svg className="w-12 h-12 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Got it! Thanks for contributing.</h3>
+          <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto mb-6">
             We'll review your submission and add it to the hub within 48 hours. You're helping make Gwinnett better.
           </p>
           <button
             onClick={submitAnother}
-            className="mt-8 bg-[#286A6C] hover:bg-[#1f5456] text-white font-semibold rounded-lg px-6 py-3 transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-6 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#286A6C] text-sm sm:text-base"
           >
             Submit another
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="w-[92%] mx-[4vw] pt-[18vh] pb-24 px-4">
-      <div className="text-start mb-10">
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mt-4 mb-3 leading-tight">
+    <main className="w-full px-4 sm:w-[92vw] sm:mx-[4vw] mt-20 pt-[5vh]">
+      <div className="max-w-full text-start mb-8 sm:mb-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-3">
           Know a Resource We're Missing?
         </h1>
-        <p className="text-gray-600 text-lg max-w-xl leading-relaxed">
+        <p className="text-gray-500 max-w-2xl text-start text-sm sm:text-base">
           Submit it here and we'll review it within 48 hours. Help us keep the hub complete.
         </p>
       </div>
 
-      {/* horizontal review process — moved to the top */}
-      <div ref={root} className="w-full mb-8 border p-8 rounded-2xl shadow-[4px_4px_8px_rgba(0,0,0,.2)] border-[#D4D3D3]">
-        <h2 className="font-serif text-4xl font-bold text-gray-900 mb-10">Review process</h2>
-        <div className="flex items-start">
+      {/* Review Process */}
+      <section ref={root} className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8 sm:mb-12 border border-gray-200">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6 sm:mb-8">Review process</h2>
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-2">
           {STEPS.map((s, i) => {
             const last = i === STEPS.length - 1;
             return (
-              <div key={s.title} className="rp-step flex-1 flex flex-col">
+              <div key={s.title} className="rp-step flex-1 flex flex-col w-full sm:w-auto">
                 <div className="flex items-center">
                   <div
-                    className="rp-circle flex items-center justify-center h-9 w-9 rounded-full text-white font-bold text-sm shrink-0 shadow"
+                    className="rp-circle flex items-center justify-center h-9 w-9 rounded-full text-white font-bold text-sm shrink-0 shadow-sm"
                     style={{ backgroundColor: "#286A6C" }}
                   >
                     {i + 1}
                   </div>
                   {!last && (
-                    <div className="flex-1 flex items-center px-2">
+                    <div className="hidden sm:flex flex-1 items-center px-2">
                       <div className="rp-shaft h-0.5 flex-1 origin-left rounded-full" style={{ backgroundColor: "#286A6C", opacity: 0.55 }} />
                       <svg className="rp-head h-4 w-4 -ml-0.5" style={{ color: "#286A6C" }} viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 5l7 7-7 7" />
@@ -184,148 +188,147 @@ export default function Submit_Resources() {
                     </div>
                   )}
                 </div>
-                <div className="rp-content pt-4 pr-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1.5">{s.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{s.desc}</p>
+                <div className="rp-content pt-3 pl-4 sm:pl-0 sm:pr-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">{s.title}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{s.desc}</p>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div className="flex gap-[2.5%]">
-        <div className="bg-[#F7F8F3] w-[70%] border border-[#D4D3D3] rounded-2xl shadow-[4px_4px_8px_rgba(0,0,0,.2)] p-6 sm:p-8 flex flex-col gap-5">
-          <div className="flex flex-col sm:flex-row gap-5">
-            <Field
-              label="Organization Name" required error={errors.org}
-              placeholder="e.g. Gwinnett County Food Bank"
-              value={form.org} onChange={update("org")}
-            />
-            <div className="flex flex-col flex-1">
-              <label className={labelClass}>Category <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  className={`${baseField} appearance-none pr-10 cursor-pointer ${errors.category ? errBorder : okBorder}`}
-                  value={form.category} onChange={update("category")}
-                >
-                  <option value="">Choose a category...</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <Chevron />
-              </div>
-              {errors.category && <span className="text-xs font-medium text-red-500 mt-1.5">{errors.category}</span>}
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-5">
-            <Field
-              label="Title"
-              placeholder="Short title or headline for this listing"
-              value={form.title} onChange={update("title")}
-            />
-            <Field
-              label="Relevant Image URL" type="url"
-              placeholder="https://example.com/image.jpg"
-              value={form.imageUrl} onChange={update("imageUrl")}
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-5">
-            <div className="flex flex-col flex-1">
-              <label className={labelClass}>Type</label>
-              <div className="relative">
-                <select
-                  className={`${baseField} appearance-none pr-10 cursor-pointer ${okBorder}`}
-                  value={form.type} onChange={update("type")}
-                >
-                  <option value="">Choose a type...</option>
-                  {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <Chevron />
+      {/* Form and Criteria Container */}
+      <section className="flex flex-col lg:flex-row gap-6 sm:gap-8 mb-[20px]">
+        {/* Form */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 w-full lg:min-w-[65%] flex items-center justify-center border border-gray-200">
+          <form className="w-full space-y-6">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <Field
+                label="Organization Name" required error={errors.org}
+                placeholder="e.g. Gwinnett County Food Bank"
+                value={form.org} onChange={update("org")}
+              />
+              <div className="flex flex-col flex-1">
+                <label className={labelClass}>Category <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <select
+                    className={`${baseField} appearance-none pr-10 cursor-pointer ${errors.category ? errBorder : okBorder}`}
+                    value={form.category} onChange={update("category")}
+                  >
+                    <option value="">Choose a category...</option>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <Chevron />
+                </div>
+                {errors.category && <span className="text-xs font-medium text-red-500 mt-1.5">{errors.category}</span>}
               </div>
             </div>
-            <Field
-              label="Website" type="url" placeholder="https://..."
-              value={form.website} onChange={update("website")}
-            />
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-5">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <Field
+                label="Title"
+                placeholder="Short title or headline for this listing"
+                value={form.title} onChange={update("title")}
+              />
+              <Field
+                label="Relevant Image URL" type="url"
+                placeholder="https://example.com/image.jpg"
+                value={form.imageUrl} onChange={update("imageUrl")}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex flex-col flex-1">
+                <label className={labelClass}>Type</label>
+                <div className="relative">
+                  <select
+                    className={`${baseField} appearance-none pr-10 cursor-pointer ${okBorder}`}
+                    value={form.type} onChange={update("type")}
+                  >
+                    <option value="">Choose a type...</option>
+                    {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <Chevron />
+                </div>
+              </div>
+              <Field
+                label="Website" type="url" placeholder="https://..."
+                value={form.website} onChange={update("website")}
+              />
+            </div>
+
             <Field
               label="Phone Number" type="tel" placeholder="(770) 000-0000"
               value={form.phone} onChange={update("phone")}
             />
-          </div>
 
-          <Field
-            label="Address / Location" required error={errors.address}
-            placeholder="City, GA or full address"
-            value={form.address} onChange={update("address")}
-          />
-
-          <div className="flex flex-col">
-            <label className={labelClass}>Describe what this organization does <span className="text-red-500">*</span></label>
-            <textarea
-              rows={5}
-              className={`${baseField} resize-y min-h-32 leading-relaxed ${errors.description ? errBorder : okBorder}`}
-              placeholder="What services do they provide? Who do they help? What can volunteers expect?"
-              value={form.description} onChange={update("description")}
-            />
-            {errors.description && <span className="text-xs font-medium text-red-500 mt-1.5">{errors.description}</span>}
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-5">
             <Field
-              label="Your Name" placeholder="So we can credit you"
-              value={form.name} onChange={update("name")}
+              label="Address / Location" required error={errors.address}
+              placeholder="City, GA or full address"
+              value={form.address} onChange={update("address")}
             />
-            <Field
-              label="Your Email" type="email" placeholder="In case we have questions"
-              value={form.email} onChange={update("email")}
-            />
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            className="self-start mt-1 inline-flex items-center gap-2 bg-[#286A6C] hover:bg-[#1f5456] text-white font-semibold rounded-lg px-6 py-3 shadow-md transition-all hover:-translate-y-0.5"
-          >
-            Submit Resource →
-          </button>
+            <div className="flex flex-col">
+              <label className={labelClass}>Describe what this organization does <span className="text-red-500">*</span></label>
+              <textarea
+                rows={5}
+                className={`${baseField} resize-y min-h-32 leading-relaxed ${errors.description ? errBorder : okBorder}`}
+                placeholder="What services do they provide? Who do they help? What can volunteers expect?"
+                value={form.description} onChange={update("description")}
+              />
+              {errors.description && <span className="text-xs font-medium text-red-500 mt-1.5">{errors.description}</span>}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              <Field
+                label="Your Name" placeholder="So we can credit you"
+                value={form.name} onChange={update("name")}
+              />
+              <Field
+                label="Your Email" type="email" placeholder="In case we have questions"
+                value={form.email} onChange={update("email")}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="w-full inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-5 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#286A6C]/40 text-sm sm:text-base"
+            >
+              Submit Resource →
+            </button>
+          </form>
         </div>
 
-        {/* empty space on the side, preserved */}
-        <div className="w-[27.5%] flex flex-col gap-2 rounded-2xl border rounded-2xl border-[#D4D3D3] shadow-[4px_4px_8px_rgba(0,0,0,.2)] p-8" >
-            <div>
-                <p className="text-4xl">
-                    Our Criteria
+        {/* Criteria Sidebar */}
+        <aside className="bg-gray-50 rounded-2xl shadow-lg p-6 sm:p-8 w-full lg:flex-grow border border-gray-200 ">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-2">Our Criteria</h2>
+          <p className="text-gray-600 text-xs sm:text-sm border-b border-gray-200 pb-4 mb-6">
+            What we look for
+          </p>
+          <div className="flex flex-col gap-6">
+            {CRITERIA.map((criteria, index) => (
+              <div key={criteria.title}>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
+                  {index + 1}. {criteria.title}
                 </p>
-                <p className="border-b pb-2">
-                    blah blah blah
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  {criteria.desc}
                 </p>
-            </div>
-            <div className="flex flex-col gap-4">
-                {CRITERIA.map((criteria, index) => (
-                    <div>
-                        <p className="text-2xl">
-                            {index+1}. {criteria.title}
-                        </p>
-                        <p className="text-md">
-                            {criteria.desc}
-                        </p>
-                    </div>
-                ))}
-            </div>
-        </div>
-      </div>
-    </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+      </section>
+    </main>
   );
 }
 
 function Field({ label, required, error, type = "text", placeholder, value, onChange }) {
   return (
     <div className="flex flex-col flex-1">
-      <label className="block text-sm font-semibold text-[#286A6C] uppercase tracking-wide mb-1.5">
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input

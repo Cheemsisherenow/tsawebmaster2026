@@ -23,7 +23,6 @@ const Location = () => {
     const isAnimating = useRef(false);
     const listRef = useRef(null);
 
-    // pull the same data the Resource Hub uses
     useEffect(() => {
         fetch(API_URL)
             .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -99,7 +98,6 @@ const Location = () => {
         );
     }, [active, categoryFilter]);
 
-    // real data: filter by the selected city, then by category (tag)
     const displayedCards = useMemo(() => {
         if (!active) return [];
         return events.filter((e) => {
@@ -140,10 +138,10 @@ const Location = () => {
                                 style={{ top: city.top, left: city.left }}
                                 className="absolute flex items-center gap-2 group -translate-x-1/2 -translate-y-1/2 z-10"
                             >
-                               <span className={clsx("w-4 h-4 rounded-full border-2 border-white shadow-sm transition-all duration-200",
+                               <span className={clsx("w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white shadow-sm transition-all duration-200",
                                 {"bg-[#286A6C] scale-125": active === city.name,"bg-slate-500 group-hover:bg-[#286A6C]": active !== city.name})} />
-                                <span className={clsx("text-lg font-bold transition-colors duration-200 select-none",
-                                {'text-[#286A6C]': active === city.name, 'text-gray-7xl group-hover:text-[#286A6C]': active !== city.name})}
+                                <span className={clsx("text-sm md:text-lg font-bold transition-colors duration-200 select-none",
+                                {'text-[#286A6C]': active === city.name, 'text-gray-700 group-hover:text-[#286A6C]': active !== city.name})}
                                 >
                                     {city.name}
                                 </span>
@@ -189,25 +187,26 @@ const Location = () => {
                             <p className="text-center text-gray-400 my-auto text-lg font-medium">No opportunities here yet — try another city or category.</p>
                         ) : (
                             displayedCards.map((card) => (
-                                <div key={card.id} className="resource-card opacity-0 w-full min-h-[45%] bg-[#D8EAE8] p-5 rounded-2xl shrink-0 shadow-sm">
+                                <div key={card.id} className="resource-card opacity-0 w-full md:min-h-[45%] bg-[#D8EAE8] p-5 rounded-2xl shrink-0 shadow-sm">
                                     <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">{card.tag || "General"}</span>
                                     <h4 className="text-2xl font-bold text-[#286A6C] mt-0.5">{card.title}</h4>
-                                    <p className="text-gray-6xl mt-2 font-medium leading-relaxed">{card.description}</p>
+                                    <p className="text-gray-600 mt-2 font-medium leading-relaxed">{card.description}</p>
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
             </div>
-            <div className="flex items-start w-full mt-16">
-                <div className="flex items-center">
-                <button className="bg-[#286A6C] text-3xl text-white rounded-2xl py-4 px-8">
-                    Find Your Match
-                </button>
-                <p className="mx-8 text-3xl">or</p>
-                <button className="text-3xl rounded-2xl py-4 px-8 bg-transparent border border-2 border-[#286A6C] text-[#286A6C]">
-                    Submit New Resources
-                </button>
+
+            <div className="flex w-full mt-10 md:mt-16">
+                <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
+                    <button className="w-full md:w-auto bg-[#286A6C] text-lg md:text-3xl text-white rounded-2xl py-3 px-6 md:py-4 md:px-8">
+                        Find Your Match
+                    </button>
+                    <p className="text-lg md:text-3xl md:mx-8">or</p>
+                    <button className="w-full md:w-auto text-lg md:text-3xl rounded-2xl py-3 px-6 md:py-4 md:px-8 bg-transparent border border-2 border-[#286A6C] text-[#286A6C]">
+                        Submit New Resources
+                    </button>
                 </div>
             </div>
         </section>

@@ -69,7 +69,6 @@ export default function Get_Involved() {
     setForm({ name: "", email: "", reason: "", message: "" });
   };
 
-  // shared input styling, with an invalid (red) state
   const fieldClass = (key) =>
     `w-full rounded-md px-4 py-3 text-sm border focus:outline-none focus:ring-2 transition ${
       errors[key]
@@ -78,19 +77,19 @@ export default function Get_Involved() {
     }`;
 
   return (
-    <main className="w-[92vw] mx-[4vw] mt-[18vh]">
-      <div className="max-w-100% text-start">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-3">
+    <main className="w-full px-4 sm:w-[92vw] sm:mx-[4vw] mt-20 pt-[5vh]">
+      <div className="max-w-full text-start">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-3">
           Ready to Make a Difference?
         </h1>
-        <p className="text-gray-500 max-w-2xl text-start">
+        <p className="text-gray-500 max-w-2xl text-start text-sm sm:text-base">
           Whether you want to volunteer, partner with us, or say hi, we would love to receive feedback from you!
         </p>
       </div>
 
-      <section className="flex w-full py-12 gap-8 justify-between">
+      <section className="flex flex-col lg:flex-row w-full py-8 sm:py-12 gap-6 sm:gap-8 justify-between">
         {/* Left: Contact Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 flex min-w-[65%] items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 w-full lg:min-w-[65%] flex items-center justify-center">
           {submitted ? (
             <div className="text-center">
               <div className="mb-6">
@@ -100,11 +99,11 @@ export default function Get_Involved() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Submitted!</h3>
-                <p className="text-gray-600">Thanks for reaching out. We'll be in touch soon!</p>
+                <p className="text-gray-600 text-sm sm:text-base">Thanks for reaching out. We'll be in touch soon!</p>
               </div>
               <button
                 onClick={handleReset}
-                className="inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-6 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#286A6C] disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 bg-[#286A6C] hover:bg-[#1F5557] text-white font-semibold rounded-lg px-6 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#286A6C] disabled:opacity-60 text-sm sm:text-base"
               >
                 Submit Another Response
               </button>
@@ -188,10 +187,10 @@ export default function Get_Involved() {
         </div>
 
         {/* Right: FAQ Card */}
-        <aside className="bg-gray-50 rounded-2xl shadow-inner p-8 flex-grow">
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-4">Quick FAQs</h2>
+        <aside className="bg-gray-50 rounded-2xl shadow-inner p-6 sm:p-8 w-full lg:flex-grow">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-4">Quick FAQs</h2>
 
-          <dl className="divide-y divide-gray-200 text-sm text-gray-600">
+          <dl className="divide-y divide-gray-200 text-xs sm:text-sm text-gray-600">
             <div className="py-4">
               <dt className="font-semibold text-gray-800">Is this free?</dt>
               <dd className="mt-1">Yep. Always will be.</dd>
@@ -213,7 +212,7 @@ export default function Get_Involved() {
             </div>
           </dl>
 
-          <div className="mt-6 text-sm text-gray-500">
+          <div className="mt-6 text-xs sm:text-sm text-gray-500">
             <div>hello@volunteergwinnett.org</div>
             <div className="mt-2 font-medium text-gray-700">Gwinnett County, GA</div>
             <div className="mt-1">Mon–Fri, 9am–5pm EST</div>

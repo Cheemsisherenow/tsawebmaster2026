@@ -1,12 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useMediaQuery } from 'react-responsive'
 import { pageNavigation } from '../store'
 import { headerLinks } from '../constants'
 
 function Header() {
   const changeCurrentPage = pageNavigation((state) => state.changeCurrentPage);
   const hasUnseenSaved = pageNavigation((state) => state.hasUnseenSaved);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);            // desktop "Get Involved" dropdown
+  const [mobileOpen, setMobileOpen] = useState(false); // mobile hamburger menu
   const dropdownRef = useRef(null);
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -16,60 +20,105 @@ function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
+
+  const go = (label) => {
+    changeCurrentPage(label);
+    setOpen(false);
+    setMobileOpen(false);
+  };
+
   return (
     <header>
-      <nav>
+      <nav className={isMobile ? "nav-mobile" : ""}>
         <div className="logo">
           <p>VolunteerGwinnett</p>
         </div>
 
-        <ul>
-          {headerLinks.map((link) => (
-            <li key={link.label} className="relative">
-                <button onClick={() => changeCurrentPage(link.label)}>
-                {link.label}
-                </button>
-                {link.label == "Saved Resources" && hasUnseenSaved && (
-                <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#FFFFFF] opacity-75 animate-ping" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFFFFF]" />
-                </span>
-                )}
-            </li>
-        ))}
-        </ul>
-
-        <div className="relative" ref={dropdownRef}>
+        {isMobile ? (
           <button
-            onClick={() => setOpen((o) => !o)}
-            className="inline-flex items-center gap-2"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="hamburger"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
           >
-            Get Involved
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`h-4 w-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <svg className="hamburger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {mobileOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
             </svg>
           </button>
+        ) : (
+          <>
+            <ul>
+              {headerLinks.map((link) => (
+                <li key={link.label} className="nav-link-item">
+                  <button onClick={() => changeCurrentPage(link.label)}>
+                    {link.label}
+                  </button>
+                  {link.label === "Saved Resources" && hasUnseenSaved && (
+                    <span className="saved-dot saved-dot--corner">
+                      <span className="saved-dot__ping" />
+                      <span className="saved-dot__core" />
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
 
-          <div className={`absolute right-0 mt-2 w-full bg-[#F7F8F3] text-lg rounded-xl shadow-[4px_4px_12px_rgba(0,0,0,.2)] border border-[#286A6C] overflow-hidden z-50 transition-all duration-300 ease-out origin-top ${open ? 'opacity-100 scale-y-100 pointer-events-auto' : 'opacity-0 scale-y-95 pointer-events-none'}`}>
-            <button
-              onClick={() => changeCurrentPage("Submit Resources")}
-              className="w-full text-left px-4 py-3 text-gray-800 hover:bg-[#286A6C] hover:text-white"
-            >
-              <span>Submit Resources</span>
-            </button>
-            <button
-              onClick={() => changeCurrentPage("Get Involved")}
-              className="w-full text-left px-4 py-3 text-gray-800 hover:bg-[#286A6C] hover:text-white transition-colors border-t border-[#286A6C]"
-            >
-              Message Us
-            </button>
+            <div className="dropdown" ref={dropdownRef}>
+              <button onClick={() => setOpen((o) => !o)}>
+                Get Involved
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`chevron ${open ? 'chevron--open' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <div className={`dropdown-panel ${open ? 'dropdown-panel--open' : ''}`}>
+                <button onClick={() => go("Submit Resources")} className="dropdown-item">
+                  <span>Submit Resources</span>
+                </button>
+                <button onClick={() => go("Get Involved")} className="dropdown-item dropdown-item--divided">
+                  Message Us
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </nav>
+
+      {isMobile && (
+        <div className={`mobile-menu ${mobileOpen ? 'mobile-menu--open' : ''}`}>
+          <div className="mobile-menu-inner">
+            {headerLinks.map((link) => (
+              <button key={link.label} onClick={() => go(link.label)} className="mobile-link mobile-link--row">
+                <span>{link.label}</span>
+                {link.label === "Saved Resources" && hasUnseenSaved && (
+                  <span className="saved-dot saved-dot--inline">
+                    <span className="saved-dot__ping" />
+                    <span className="saved-dot__core" />
+                  </span>
+                )}
+              </button>
+            ))}
+
+            <div className="mobile-menu-section">
+              <button onClick={() => go("Submit Resources")} className="mobile-link">
+                Submit Resources
+              </button>
+              <button onClick={() => go("Get Involved")} className="mobile-link">
+                Message Us
+              </button>
+            </div>
           </div>
         </div>
-      </nav>
+      )}
     </header>
   )
 }

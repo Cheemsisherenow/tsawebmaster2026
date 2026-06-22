@@ -51,6 +51,7 @@ export default function Discover() {
 
   const topRef = useRef(null);
   const flingRef = useRef(null);
+  const lockRef = useRef(false); // blocks repeat swipes on the same card
 
   useEffect(() => {
     fetch(API_URL)
@@ -89,7 +90,7 @@ export default function Discover() {
   const commitSwipe = useCallback((dir, item) => {
     setLastSwiped({ item, dir });
     if (dir === "right") {
-      setMatched((m) => [...m, item]);
+      setMatched((m) => (m.some((x) => x.id === item.id) ? m : [...m, item]));
       addSaved(item);
     } else {
       setPassedIds((s) => new Set(s).add(String(item.id)));
@@ -129,6 +130,7 @@ export default function Discover() {
 
     gsap.set(el, { x: 0, y: 0, rotation: 0, opacity: 1, borderColor: "#286A6C" });
     gsap.set([keepEl, passEl], { opacity: 0 });
+    lockRef.current = false; // new card is ready -> allow one swipe
 
     const drag = Draggable.create(el, {
       type: "x,y",
@@ -151,6 +153,8 @@ export default function Discover() {
     })[0];
 
     const fling = (dir) => {
+      if (lockRef.current) return; // ignore extra clicks while one is in flight
+      lockRef.current = true;
       drag.disable();
       gsap.to(el, {
         x: dir === "right" ? 600 : -600,

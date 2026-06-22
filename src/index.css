@@ -17,183 +17,455 @@ html, body {
 }
 
 @layer component {
+
   header {
-    @apply w-screen fixed top-0 left-0 z-50 bg-[#286A6C] px-[4vw] text-white shadow-[0px_4px_12px_rgba(0,0,0,.5)];
+    @apply fixed top-0 left-0 z-50 w-screen bg-[#286A6C] px-[4vw] text-white shadow-[0px_4px_12px_rgba(0,0,0,.5)];
+
+    /* all header buttons get a pointer cursor; padding/spacing handled per-type below */
     button {
-      @apply cursor-pointer h-full py-[1vw] px-8 hover:bg-[#1f5254] transition-all duration-300 ease-in-out ;
-      span {
-        @apply hover:-translate-y-0.5
-      }
+      @apply cursor-pointer;
     }
+
     nav {
-      @apply flex flex-row justify-between items-center text-2xl;
+      @apply flex flex-row items-center justify-between text-2xl;
+
+      &.nav-mobile {
+        @apply py-2;
+      }
+
       ul {
         @apply flex flex-row text-lg;
       }
+
+      /* desktop page-link buttons */
+      ul button {
+        @apply h-full px-8 py-[1vw] transition-all duration-300 ease-in-out hover:bg-[#1f5254];
+
+        span {
+          @apply hover:-translate-y-0.5;
+        }
+      }
+
+      /* "Get Involved" dropdown trigger (direct child of .dropdown only) */
+      & > .dropdown > button {
+        @apply inline-flex h-full items-center gap-2 px-8 py-[1vw] transition-all duration-300 ease-in-out hover:bg-[#1f5254];
+      }
+    }
+
+    /* nav <li>: positioning context for the saved dot */
+    .nav-link-item {
+      @apply relative;
+    }
+
+    /* hamburger */
+    .hamburger {
+      @apply p-2;
+    }
+    .hamburger-icon {
+      @apply h-6 w-6;
+    }
+
+    /* chevron */
+    .chevron {
+      @apply h-4 w-4 transition-transform duration-200;
+    }
+    .chevron--open {
+      @apply rotate-180;
+    }
+
+    /* dropdown wrapper + panel */
+    .dropdown {
+      @apply relative;
+    }
+    .dropdown-panel {
+      @apply absolute right-0 z-50 mt-2 w-full origin-top overflow-hidden rounded-xl border border-[#286A6C] bg-[#F7F8F3] text-lg text-gray-800 opacity-0 shadow-[4px_4px_12px_rgba(0,0,0,.2)] pointer-events-none scale-y-95 transition-all duration-300 ease-out;
+    }
+    .dropdown-panel--open {
+      @apply opacity-100 pointer-events-auto scale-y-100;
+    }
+    .dropdown-item {
+      @apply w-full px-4 py-3 text-left text-gray-800 transition-colors hover:bg-[#286A6C] hover:text-white;
+    }
+    .dropdown-item--divided {
+      @apply border-t border-[#286A6C];
+    }
+
+    /* saved-resources notification dot */
+    .saved-dot {
+      @apply flex h-2.5 w-2.5;
+    }
+    .saved-dot__ping {
+      @apply absolute inline-flex h-full w-full animate-ping rounded-full opacity-75;
+    }
+    .saved-dot__core {
+      @apply relative inline-flex h-2.5 w-2.5 rounded-full;
+    }
+    .saved-dot--corner {
+      @apply absolute top-0 right-0;
+    }
+    .saved-dot--corner .saved-dot__ping,
+    .saved-dot--corner .saved-dot__core {
+      @apply bg-white;
+    }
+    .saved-dot--inline {
+      @apply relative;
+    }
+    .saved-dot--inline .saved-dot__ping,
+    .saved-dot--inline .saved-dot__core {
+      @apply bg-[#286A6C];
+    }
+
+    /* mobile slide-down menu */
+    .mobile-menu {
+      @apply max-h-0 overflow-hidden transition-all duration-300 ease-out;
+    }
+    .mobile-menu--open {
+      @apply max-h-[32rem];
+    }
+    .mobile-menu-inner {
+      @apply flex flex-col border-t border-[#286A6C] bg-[#F7F8F3] py-2;
+    }
+    .mobile-menu-section {
+      @apply mt-1 border-t border-[#286A6C] pt-1;
+    }
+    .mobile-link {
+      @apply w-full px-5 py-3 text-left text-gray-800 transition-colors hover:bg-[#286A6C] hover:text-white;
+    }
+    .mobile-link--row {
+      @apply flex items-center justify-between;
     }
   }
   #landing {
-    @apply relative flex flex-row justify-between mt-[18vh] min-h-[75vh] w-[92vw] mx-[4vw];
+    @apply relative mx-[4vw] mt-[12vh] flex w-[92vw] flex-col md:mt-[18vh] md:min-h-[75vh] md:flex-row md:justify-between;
+  
     button {
-      @apply bg-[#286A6C] text-3xl text-white rounded-2xl py-4 px-8 mb-8 shadow-[4px_4px_8px_rgba(0,0,0,.4)] transition-all duration-300 hover:bg-[#33878a] hover:-translate-y-1 hover:shadow-[4px_4px_8px_#286A6C];
+      @apply rounded-2xl bg-[#286A6C] px-6 py-3 text-xl text-white shadow-[4px_4px_8px_rgba(0,0,0,.4)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#33878a] hover:shadow-[4px_4px_8px_#286A6C] md:mb-8 md:px-8 md:py-4 md:text-3xl;
     }
+  
     .text-body {
       @apply flex flex-col;
+  
       .wrapper {
         @apply flex flex-col gap-1;
+  
         .location {
-          @apply text-2xl;
+          @apply text-lg md:text-2xl;
         }
         .heading {
-          @apply text-7xl leading-[1.2];
+          @apply text-4xl leading-[1.2] md:text-7xl;
         }
       }
+  
       .description {
-        @apply text-3xl mt-8 mb-16 leading-relaxed;
+        @apply mt-6 mb-10 text-lg leading-relaxed md:mt-8 md:mb-16 md:text-3xl;
       }
     }
+  
     .sphereBox {
-      @apply flex w-[45%] h-3/4 z-20 items-center;
+      @apply z-20 flex h-3/4 w-[45%] items-center;
+  
       .sphere {
-        @apply relative w-full h-[400px] bg-transparent sm:h-[460px];
+        @apply relative h-[400px] w-full bg-transparent sm:h-[460px];
+  
         .title {
-          @apply absolute left-1/2 bottom-4 -translate-x-1/2 px-4 py-1.5 rounded-full text-sm font-medium border border-white/20 bg-black/40 dark:bg-white/5 backdrop-blur text-white pointer-events-none transition-opacity duration-200;
+          @apply pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/20 bg-black/40 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition-opacity duration-200 dark:bg-white/5;
         }
       }
     }
   }
   #statistics {
-    @apply bg-[#F7F8F3] text-white relative min-h-screen overflow-hidden;
-    .scroll-track {
-      @apply h-[600vh] relative bg-transparent z-10;
-      .threeD-screen {
-        @apply sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden;
-        .starfield {
-          @apply absolute inset-0 pointer-events-none;
+    @apply relative min-h-screen overflow-hidden bg-[#F7F8F3] text-white;
+  
+    /* ---- shared chart styles (desktop sections + mobile cards) ---- */
+    .interactivePieChart {
+      .volunteerGroup {
+        @apply inset-0 flex flex-col items-center gap-0.5 pointer-events-none;
+        .volunteer {
+          @apply text-[10px] font-semibold uppercase tracking-wider text-slate-400 transition-all duration-200;
         }
+        .precentage {
+          @apply text-3xl font-black transition-all duration-200;
+        }
+      }
+      .chart {
+        @apply relative h-32 w-32;
+      }
+    }
+    .interactiveBarGraph {
+      @apply h-[230px] w-full;
+    }
+    .custom-chart-tooltip {
+      @apply rounded-lg border border-[#63BDBF]/30 bg-black/85 px-2 py-2 shadow-[0_4px_20px_rgba(255,255,255,0.4)] backdrop-blur-sm;
+      .date {
+        @apply m-0 text-sm font-bold text-[#63BDBF];
+      }
+      .value {
+        @apply mt-0.5 mb-0 text-sm font-semibold text-white;
+      }
+    }
+  
+    /* ---- DESKTOP scroll experience ---- */
+    .scroll-track {
+      @apply relative z-10 h-[600vh] bg-transparent;
+  
+      .threeD-screen {
+        @apply sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden;
+  
+        .starfield {
+          @apply pointer-events-none absolute inset-0;
+        }
+  
         .wordSection {
-          @apply flex flex-row absolute w-1/3 p-4 z-50;
+          @apply absolute z-50 flex w-1/3 flex-row p-4;
+  
           .heading {
             @apply text-5xl font-black text-white;
           }
           .subtitle {
-            @apply text-xl text-white/80 font-medium;
+            @apply text-xl font-medium text-white/80;
           }
           .description {
-            @apply text-xl text-white/80 font-medium;
+            @apply text-xl font-medium text-white/80;
           }
-          .interactivePieChart {
-            .volunteerGroup {
-              @apply inset-0 flex flex-col items-center pointer-events-none gap-0.5;
-              .volunteer {
-                @apply text-[10px] text-slate-400 uppercase tracking-wider font-semibold transition-all duration-200;
-              }
-              .precentage {
-                @apply text-3xl font-black transition-all duration-200;
-              }
-            }
-            .chart {
-              @apply relative w-32 h-32
-            }
-          }
-          .interactiveBarGraph {
-            @apply w-full h-[230px];
-          }
-          .custom-chart-tooltip {
-            @apply bg-black/85 border border-[#63BDBF]/30 rounded-lg px-2 py-2 backdrop-blur-sm shadow-[0_4px_20px_rgba(255,255,255,0.4)]
-
-            ;
-            .date {
-              @apply text-[#63BDBF] text-sm font-bold m-0;
-            }
-            .value {
-              @apply text-white text-sm font-semibold mt-0.5 mb-0;
-            }
-          }
+        }
+      }
+    }
+  
+    /* ---- MOBILE static 2x2 grid ---- */
+    &.stats-mobile {
+      @apply min-h-0 overflow-visible px-[4vw] py-12 text-gray-900;
+  
+      .stats-mobile-intro {
+        @apply mb-8 text-center;
+  
+        .stats-mobile-title {
+          @apply text-3xl font-black text-gray-900;
+        }
+        .stats-mobile-lead {
+          @apply mt-3 text-base leading-relaxed text-gray-600;
+        }
+      }
+  
+      .stats-grid {
+        @apply grid grid-cols-2 gap-4;
+      }
+  
+      .stats-card {
+        @apply flex flex-col items-start rounded-2xl border border-[#D4D3D3] bg-white p-4 shadow-sm;
+  
+        .interactivePieChart,
+        .interactiveBarGraph {
+          @apply mx-auto;
+        }
+  
+        .heading {
+          @apply text-2xl font-black text-[#286A6C];
+        }
+        .subtitle {
+          @apply text-sm font-medium text-gray-500;
+        }
+        .description {
+          @apply text-xs leading-relaxed text-gray-600;
         }
       }
     }
   }
   #highlights {
-    @apply flex flex-col min-h-[110wh] w-[92vw] mx-[4vw] items-center gap-16;
+    @apply flex flex-col min-h-[110vh] w-[92vw] mx-[4vw] items-center gap-16;
+  
     button {
       @apply bg-[#286A6C] w-fit text-3xl text-white rounded-2xl py-4 px-8 shadow-[4px_4px_8px_rgba(0,0,0,.4)] transition-all duration-300 hover:bg-[#33878a] hover:-translate-y-1 hover:shadow-[4px_4px_8px_#286A6C];
     }
+  
     .block_container {
       @apply flex flex-row gap-[1vw] justify-center items-center w-full;
+  
       .block {
         @apply relative flex items-center justify-center h-[70vh] bg-[#D8EAE8] rounded-xl shadow-[4px_4px_8px_rgba(0,0,0,.2)];
+  
         button {
           @apply bg-transparent border border-2 border-[#286A6C] text-[#286A6C] shadow-[4px_4px_12px_rgba(0,0,0,.3)] hover:bg-[#286A6C] hover:text-white;
         }
+  
         .outer_view {
           @apply flex w-1/3 h-2/3 items-center justify-center;
-          .title {
-            @apply flex text-3xl [writing-mode:vertical-lr] transform items-center justify-center rotate-180 w-full;
-          }
-          .upper_line {
-            @apply absolute h-[5%] top-[10%] w-full bg-[#286A6C];
-          }
-          .lower_line {
-            @apply absolute h-[5%] bottom-[10%] w-full bg-[#286A6C];
-          }
+          .title { @apply flex text-3xl [writing-mode:vertical-lr] transform items-center justify-center rotate-180 w-full; }
+          .upper_line { @apply absolute h-[5%] top-[10%] w-full bg-[#286A6C]; }
+          .lower_line { @apply absolute h-[5%] bottom-[10%] w-full bg-[#286A6C]; }
         }
+  
         .inner_view {
           @apply flex flex-col px-8 justify-center opacity-0 absolute inset-0 gap-16 w-full h-full;
           .inner_container {
             @apply flex flex-col gap-8;
             .header_container {
               @apply flex flex-col;
-              .tag {
-                @apply text-2xl;
-              }
-              .title {
-                @apply text-5xl;
-              }
+              .tag { @apply text-2xl; }
+              .title { @apply text-5xl; }
             }
-            .description {
-              @apply text-2xl;
-            }
+            .description { @apply text-2xl; }
           }
         }
-        
+      }
+    }
+  
+    /* ---------- MOBILE: vertical click-accordion ---------- */
+    &.highlights-mobile {
+      @apply gap-8 min-h-0;
+  
+      .block_container {
+        @apply flex w-full flex-col items-stretch gap-3;
+  
+        .block {
+          @apply h-auto w-full flex-col items-stretch justify-start overflow-hidden rounded-xl bg-[#D8EAE8] shadow-[4px_4px_8px_rgba(0,0,0,.2)];
+  
+          .block_header {
+            @apply flex w-full items-center justify-between gap-3 border-0 bg-transparent px-5 py-4 text-left text-[#286A6C] shadow-none transition-none;
+  
+            .title {
+              @apply text-lg font-semibold;
+            }
+            .chevron {
+              @apply text-xl transition-transform duration-300;
+            }
+          }
+  
+          &.is-open .chevron {
+            @apply rotate-180;
+          }
+  
+          /* grid 0fr -> 1fr gives a smooth height-auto expand */
+          .block_body {
+            @apply grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out;
+  
+            .block_body_inner {
+              @apply overflow-hidden;
+            }
+  
+            .block_body_content {
+              @apply flex flex-col gap-3 px-5 pb-5;
+  
+              .tag {
+                @apply text-sm font-semibold text-[#286A6C]/70;
+              }
+              .description {
+                @apply text-sm leading-relaxed text-gray-700;
+              }
+              button {
+                @apply mt-2 w-fit rounded-xl border-2 border-[#286A6C] bg-transparent px-5 py-2 text-base text-[#286A6C] shadow-md transition-colors hover:bg-[#286A6C] hover:text-white;
+              }
+            }
+          }
+  
+          &.is-open .block_body {
+            @apply grid-rows-[1fr];
+          }
+        }
+      }
+  
+      /* shrink the "Start Discovering" button on mobile */
+      .w-full button {
+        @apply text-xl py-3 px-6;
       }
     }
   }
   #location {
-    @apply flex flex-col items-center w-[92vw] h-[150vh] mx-[4vw] py-8 select-none;
+    @apply flex w-[92vw] mx-[4vw] flex-col items-center py-8 select-none md:h-[150vh];
+  
     .heading {
-      @apply flex flex-col mb-6;
+      @apply mb-6 flex flex-col;
+  
       .title {
-        @apply text-center text-7xl font-bold;
+        @apply text-center text-4xl font-bold md:text-7xl;
       }
       .subtitle {
-        @apply text-center text-3xl text-gray-500 mt-2;
+        @apply mt-2 text-center text-lg text-gray-500 md:text-3xl;
       }
     }
+  
     .map_container {
-      @apply flex flex-row w-full h-[90vh] gap-4;
+      @apply flex w-full flex-col gap-4 md:h-[90vh] md:flex-row;
+  
       .gwinnett_map {
-        @apply bg-[url('/tsawebmaster2026/gwinnett.png')] relative w-full max-w-[60%] h-full bg-cover bg-center border border-[#D4D3D3]/20 bg-no-repeat bg-[#D8EAE8] rounded-3xl p-4 shadow-md;
+        @apply relative h-[60vh] w-full rounded-3xl border border-[#D4D3D3]/20 bg-[#D8EAE8] bg-[url('/tsawebmaster2026/gwinnett.png')] bg-cover bg-center bg-no-repeat p-4 shadow-md md:h-full md:max-w-[60%];
+  
         .coordinate_map {
-          @apply absolute top-[10%] left-[15%] w-[70%] h-[80%];
+          @apply absolute top-[10%] left-[15%] h-[80%] w-[70%];
         }
       }
     }
+  
     .right_column {
-      @apply flex flex-col rounded-3xl w-[40%] h-full justify-between gap-6;
+      @apply flex w-full flex-col justify-between gap-6 rounded-3xl md:h-full md:w-[40%];
+  
       .title {
-        @apply text-5xl font-bold text-[#286A6C];
+        @apply text-3xl font-bold text-[#286A6C] md:text-5xl;
       }
       .amount {
-        @apply text-xl text-gray-500 font-medium mt-1;
+        @apply mt-1 text-base font-medium text-gray-500 md:text-xl;
       }
+  
       .category_selection {
         @apply flex flex-row gap-3;
+  
         .category_button {
-          @apply px-4 py-2 rounded-xl font-bold text-sm transition-all border;
+          @apply rounded-xl border px-4 py-2 text-sm font-bold transition-all;
         }
       }
+    }
+  }
+  footer {
+    @apply bg-[#286A6C] px-[4vw] pb-[4vh] text-white;
+  
+    button {
+      @apply cursor-pointer;
+    }
+  
+    .footer-top {
+      @apply flex flex-col gap-10 py-[8vh] md:flex-row md:justify-between md:gap-0;
+    }
+  
+    .footer-about {
+      @apply flex w-full flex-col items-start gap-8 md:w-[40%];
+  
+      .footer-about-text {
+        @apply flex flex-col gap-4;
+      }
+  
+      .brand {
+        @apply text-2xl md:text-3xl;
+      }
+      .blurb {
+        @apply text-base md:text-lg;
+      }
+    }
+  
+    .footer-top-btn {
+      @apply rounded-xl border border-white px-6 py-3 text-xl text-white transition-colors hover:bg-white hover:text-[#286A6C] md:text-2xl;
+    }
+  
+    .footer-nav {
+      @apply flex flex-col items-start gap-4 text-xl md:-translate-x-1/2;
+  
+      .footer-nav-title {
+        @apply text-2xl;
+      }
+  
+      ul {
+        @apply flex flex-col items-start gap-2;
+      }
+  
+      li button {
+        @apply transition-colors hover:text-white/70;
+      }
+    }
+  
+    .footer-divider {
+      @apply my-6 border-white/30;
+    }
+  
+    .footer-copy {
+      @apply text-sm text-white/70;
     }
   }
   

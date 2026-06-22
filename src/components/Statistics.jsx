@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -10,11 +11,15 @@ import SimpleChart from './Diagrams/InteractiveBar';
 gsap.registerPlugin(ScrollTrigger);
 
 const Statistics = ({ sphereRef }) => {
-    const containerRef   = useRef(null);
-    const starFieldRef   = useRef(null);
+    const containerRef = useRef(null);
+    const starFieldRef = useRef(null);
     const numStars = 300;
 
+    const isMobile = useMediaQuery({ maxWidth: 767 });
+
+    // reload-on-resize hack — desktop only (mobile fires resize constantly)
     useEffect(() => {
+        if (isMobile) return;
         let resizeTimer = null;
         const onResize = () => {
             clearTimeout(resizeTimer);
@@ -28,9 +33,11 @@ const Statistics = ({ sphereRef }) => {
             window.removeEventListener('resize', onResize);
             clearTimeout(resizeTimer);
         };
-    }, []);
+    }, [isMobile]);
 
+    // sphere fly-to-center — desktop only
     useEffect(() => {
+        if (isMobile) return;
         const el = sphereRef?.current;
         if (!el) return;
 
@@ -42,7 +49,6 @@ const Statistics = ({ sphereRef }) => {
             const initialX  = rect.left - leftOffset;
             const initialY = (window.innerHeight - rect.height) / 2;
 
-            console.log("start");
             gsap.set(el, {
                 position: 'fixed',
                 top: 0, left: 0,
@@ -65,18 +71,6 @@ const Statistics = ({ sphereRef }) => {
                     end:   'top top',
                     scrub: 1.2,
                     invalidateOnRefresh: true,
-                    onEnter: () => console.log("ENTER"),
-        onLeave: () => console.log("LEAVE"),
-        onEnterBack: () => console.log("ENTER BACK"),
-        onLeaveBack: () => console.log("LEAVE BACK"),
-
-        onRefresh: (self) => {
-            console.log("REFRESH", {
-                progress: self.progress,
-                start: self.start,
-                end: self.end
-            });
-        },
                 },
                 x: targetX,
                 y: targetY,
@@ -88,12 +82,13 @@ const Statistics = ({ sphereRef }) => {
             st?.kill();
             gsap.set(el, { clearProps: 'all' });
         };
-    }, [sphereRef]);
+    }, [sphereRef, isMobile]);
 
+    // starfield + pinned 3D timeline — desktop only
     useGSAP(() => {
+        if (isMobile) return;
         const container = starFieldRef.current;
         if (!container) return;
-        
 
         const generatedStars = [];
 
@@ -142,7 +137,6 @@ const Statistics = ({ sphereRef }) => {
                     });
                     scrollTrack.appendChild(el);
                 },
-        
                 onEnterBack: () => {
                     const el = sphereRef.current;
                     if (!el) return;
@@ -189,8 +183,36 @@ const Statistics = ({ sphereRef }) => {
         return () => {
             generatedStars.forEach((star) => star.element.remove());
         };
-    }, { scope: containerRef });
+    }, { scope: containerRef, dependencies: [isMobile] });
 
+    /* ---------- MOBILE: static 2x2 grid ---------- */
+    if (isMobile) {
+        return (
+            <div id="statistics" ref={containerRef} className="stats-mobile">
+                <div className="stats-mobile-intro">
+                    <p className="stats-mobile-title">Explore endless opportunities</p>
+                    <p className="stats-mobile-lead">
+                        Our organization mitigates the engagement gap by serving as Gwinnett County's resource hub, providing a centralized database of local organizations so you can see the value of your time in the community.
+                    </p>
+                </div>
+
+                <div className="stats-grid">
+                    {statistics.map((i) => (
+                        <div key={i.id} className="stats-card">
+                            {i.id == 1 && <InteractivePieChart />}
+                            {i.id == 2 && <SimpleChart />}
+                            <div className="heading">{i.top}</div>
+                            <div className="subtitle">{i.sub}</div>
+                            <hr className="my-2" />
+                            <div className="description">{i.description}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    /* ---------- DESKTOP: scroll experience ---------- */
     return (
         <div id="statistics" ref={containerRef}>
             <div className="scroll-track">
@@ -217,7 +239,6 @@ const Statistics = ({ sphereRef }) => {
                             {i.id == 1 && (<InteractivePieChart/>)  }
                             {i.id == 2 && (<SimpleChart/>)  }
                             <div>
-                                
                                 <div className="heading">{i.top}</div>
                                 <div className="subtitle">{i.sub}</div>
                                 <hr className="my-2" />
